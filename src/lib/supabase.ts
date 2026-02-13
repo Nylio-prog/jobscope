@@ -32,6 +32,31 @@ function assertAdminConfig(): { url: string; serviceRoleKey: string } {
     );
   }
 
+  if (supabaseServiceRoleKey.startsWith('sb_publishable_')) {
+    throw new Error(
+      'SUPABASE_SERVICE_ROLE_KEY is using a publishable key. Use the service_role secret key from Supabase Project Settings -> API.',
+    );
+  }
+
+  if (supabaseServiceRoleKey.startsWith('eyJ')) {
+    try {
+      const [, payloadPart] = supabaseServiceRoleKey.split('.');
+      const payload = JSON.parse(
+        Buffer.from(payloadPart.replace(/-/g, '+').replace(/_/g, '/'), 'base64').toString('utf8'),
+      ) as { role?: string };
+
+      if (payload.role === 'anon') {
+        throw new Error(
+          'SUPABASE_SERVICE_ROLE_KEY is an anon JWT. Use the service_role key from Supabase Project Settings -> API.',
+        );
+      }
+    } catch (error) {
+      if (error instanceof Error) {
+        throw error;
+      }
+    }
+  }
+
   return {
     url: supabaseUrl,
     serviceRoleKey: supabaseServiceRoleKey,
