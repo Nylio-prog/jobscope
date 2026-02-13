@@ -39,6 +39,7 @@ Last updated: 2026-02-13
 - `DONE` Add moderation status handling and clear user messaging.
 - `DONE` Connect Supabase persistence for approved reads and pending submissions.
 - `DONE` Add authenticated moderator flow (email magic link + approve/reject endpoint).
+- `DONE` Move moderation UI to unlinked staff route (`/staff/moderation`).
 
 ## Phase 6 - Automated Tests and QA
 - `DONE` Unit tests for schemas and core utilities.
@@ -58,6 +59,5 @@ Last updated: 2026-02-13
 2. `npm run test:coverage`: enforce coverage report generation.
 3. `npm run build`: production build must succeed.
 4. Manual smoke checks:
-- `/` (Wall of Paths), `/4` (redirect alias)
-- `/jobs`, `/jobs/[slug]`, `/share`, `/moderation`
+- `/jobs`, `/jobs/[slug]`, `/share`, `/staff/moderation`
 - API submission validation behavior

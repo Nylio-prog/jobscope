@@ -10,6 +10,7 @@ const REQUIRED_ROUTE_FILES = [
   'src/pages/jobs/[slug].astro',
   'src/pages/share.astro',
   'src/pages/moderation.astro',
+  'src/pages/staff/moderation.astro',
   'src/pages/about.astro',
   'src/pages/guidelines.astro',
 ];

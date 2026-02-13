@@ -40,8 +40,8 @@ export const jobProfileSchema = z.object({
   recommendationToStudents: z.string().min(20).max(900),
   yearsExperience: z.number().int().min(0).max(50),
   submitterType: z.enum(SUBMITTER_TYPES),
-  createdAt: z.string().datetime(),
-  approvedAt: z.string().datetime().optional(),
+  createdAt: z.string().datetime({ offset: true }),
+  approvedAt: z.string().datetime({ offset: true }).optional(),
   status: z.enum(PROFILE_STATUS),
 });
 

@@ -55,6 +55,29 @@ type JobProfileRow = {
   status: JobProfile['status'];
 };
 
+export function normalizeDbTimestamp(value: string | null | undefined): string | undefined {
+  if (!value) {
+    return undefined;
+  }
+
+  let normalized = value.trim();
+  if (!normalized.includes('T')) {
+    normalized = normalized.replace(' ', 'T');
+  }
+
+  normalized = normalized.replace(/([+-]\d{2})(\d{2})$/, '$1:$2');
+
+  if (/([+-]\d{2})$/.test(normalized)) {
+    normalized = `${normalized}:00`;
+  }
+
+  if (!/[zZ]|[+-]\d{2}:\d{2}$/.test(normalized)) {
+    normalized = `${normalized}Z`;
+  }
+
+  return normalized;
+}
+
 function mapDbRowToJobProfile(row: JobProfileRow): JobProfile {
   return jobProfileSchema.parse({
     id: row.id,
@@ -74,8 +97,8 @@ function mapDbRowToJobProfile(row: JobProfileRow): JobProfile {
     recommendationToStudents: row.recommendation_to_students,
     yearsExperience: row.years_experience,
     submitterType: row.submitter_type,
-    createdAt: row.created_at,
-    approvedAt: row.approved_at ?? undefined,
+    createdAt: normalizeDbTimestamp(row.created_at) ?? row.created_at,
+    approvedAt: normalizeDbTimestamp(row.approved_at),
     status: row.status,
   });
 }
@@ -227,11 +250,43 @@ export type PendingSubmissionPreview = {
   slug: string;
   roleTitle: string;
   industry: string;
+  seniority: string;
   location: string;
   workMode: string;
+  salaryRange: string | null;
+  educationPath: string | null;
+  dayToDay: string;
+  toolsUsed: string[];
+  bestParts: string;
+  hardestParts: string;
+  recommendationToStudents: string;
   yearsExperience: number;
+  submitterType: string;
+  contactEmail: string | null;
   createdAt: string;
   reviewNotes: string | null;
+};
+
+type PendingSubmissionRow = {
+  id: string;
+  slug: string;
+  role_title: string;
+  industry: string;
+  seniority: string;
+  location: string;
+  work_mode: string;
+  salary_range: string | null;
+  education_path: string | null;
+  day_to_day: string;
+  tools_used: string[] | null;
+  best_parts: string;
+  hardest_parts: string;
+  recommendation_to_students: string;
+  years_experience: number;
+  submitter_type: string;
+  contact_email: string | null;
+  created_at: string;
+  review_notes: string | null;
 };
 
 export async function listPendingSubmissions(): Promise<PendingSubmissionPreview[]> {
@@ -245,7 +300,27 @@ export async function listPendingSubmissions(): Promise<PendingSubmissionPreview
   const { data, error } = await supabase
     .from(JOB_PROFILES_TABLE)
     .select(
-      'id,slug,role_title,industry,location,work_mode,years_experience,created_at,review_notes',
+      [
+        'id',
+        'slug',
+        'role_title',
+        'industry',
+        'seniority',
+        'location',
+        'work_mode',
+        'salary_range',
+        'education_path',
+        'day_to_day',
+        'tools_used',
+        'best_parts',
+        'hardest_parts',
+        'recommendation_to_students',
+        'years_experience',
+        'submitter_type',
+        'contact_email',
+        'created_at',
+        'review_notes',
+      ].join(','),
     )
     .eq('status', 'pending')
     .order('created_at', { ascending: false })
@@ -255,15 +330,27 @@ export async function listPendingSubmissions(): Promise<PendingSubmissionPreview
     throw new Error(error?.message ?? 'Failed to fetch pending submissions.');
   }
 
-  return data.map((row) => ({
+  const rows = data as unknown as PendingSubmissionRow[];
+
+  return rows.map((row) => ({
     id: row.id as string,
     slug: row.slug as string,
     roleTitle: row.role_title as string,
     industry: row.industry as string,
+    seniority: row.seniority as string,
     location: row.location as string,
     workMode: row.work_mode as string,
+    salaryRange: (row.salary_range as string | null) ?? null,
+    educationPath: (row.education_path as string | null) ?? null,
+    dayToDay: row.day_to_day as string,
+    toolsUsed: (row.tools_used as string[] | null) ?? [],
+    bestParts: row.best_parts as string,
+    hardestParts: row.hardest_parts as string,
+    recommendationToStudents: row.recommendation_to_students as string,
     yearsExperience: row.years_experience as number,
-    createdAt: row.created_at as string,
+    submitterType: row.submitter_type as string,
+    contactEmail: (row.contact_email as string | null) ?? null,
+    createdAt: normalizeDbTimestamp(row.created_at as string) ?? (row.created_at as string),
     reviewNotes: (row.review_notes as string | null) ?? null,
   }));
 }

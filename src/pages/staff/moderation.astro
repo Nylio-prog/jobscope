@@ -1,0 +1,383 @@
+---
+import Layout from '../../layouts/Layout.astro';
+---
+
+<Layout
+  title="Staff Moderation"
+  description="Approve or reject pending submissions with Supabase-authenticated moderator access."
+  noIndex={true}
+>
+  <section class="page-hero">
+    <p><strong>Staff Moderation</strong></p>
+    <h1>Review pending submissions.</h1>
+    <p>
+      This route is intentionally not linked in public navigation. Sign in with a moderator email
+      listed in `MODERATOR_EMAILS`.
+    </p>
+  </section>
+
+  <section class="panel stack">
+    <div id="mod-auth-status" role="status" aria-live="polite"></div>
+
+    <form id="login-form" class="auth-form">
+      <label>
+        Moderator email
+        <input id="moderator-email" type="email" required />
+      </label>
+      <button class="btn btn-primary" type="submit">Send magic link</button>
+    </form>
+
+    <div id="session-actions" class="cta-row hidden">
+      <button id="refresh-pending" class="btn btn-secondary" type="button">Refresh queue</button>
+      <button id="sign-out" class="btn btn-secondary" type="button">Sign out</button>
+    </div>
+  </section>
+
+  <section class="panel">
+    <h2>Pending queue</h2>
+    <p id="pending-summary">Sign in to load pending submissions.</p>
+    <div id="pending-list" class="pending-list"></div>
+  </section>
+</Layout>
+
+<script>
+  import { createClient } from '@supabase/supabase-js';
+
+  const supabaseUrl = import.meta.env.PUBLIC_SUPABASE_URL;
+  const supabaseAnonKey = import.meta.env.PUBLIC_SUPABASE_ANON_KEY;
+
+  const authStatus = document.querySelector('#mod-auth-status');
+  const pendingSummary = document.querySelector('#pending-summary');
+  const pendingList = document.querySelector('#pending-list');
+  const loginForm = document.querySelector('#login-form');
+  const emailInput = document.querySelector('#moderator-email');
+  const sessionActions = document.querySelector('#session-actions');
+  const refreshPendingButton = document.querySelector('#refresh-pending');
+  const signOutButton = document.querySelector('#sign-out');
+
+  if (
+    !(authStatus instanceof HTMLElement) ||
+    !(pendingSummary instanceof HTMLElement) ||
+    !(pendingList instanceof HTMLElement) ||
+    !(loginForm instanceof HTMLFormElement) ||
+    !(emailInput instanceof HTMLInputElement) ||
+    !(sessionActions instanceof HTMLElement) ||
+    !(refreshPendingButton instanceof HTMLButtonElement) ||
+    !(signOutButton instanceof HTMLButtonElement)
+  ) {
+    throw new Error('Moderation UI failed to initialize.');
+  }
+
+  type PendingEntry = {
+    id: string;
+    slug: string;
+    roleTitle: string;
+    industry: string;
+    seniority: string;
+    location: string;
+    workMode: string;
+    yearsExperience: number;
+    createdAt: string;
+    reviewNotes: string | null;
+    salaryRange: string | null;
+    educationPath: string | null;
+    dayToDay: string;
+    toolsUsed: string[];
+    bestParts: string;
+    hardestParts: string;
+    recommendationToStudents: string;
+    submitterType: string;
+    contactEmail: string | null;
+  };
+
+  const toText = (value: unknown): string =>
+    value === null || value === undefined || value === '' ? 'Not provided' : String(value);
+
+  const createInfoParagraph = (label: string, value: unknown): HTMLParagraphElement => {
+    const p = document.createElement('p');
+    const strong = document.createElement('strong');
+    strong.textContent = `${label}: `;
+    p.appendChild(strong);
+    p.appendChild(document.createTextNode(toText(value)));
+    return p;
+  };
+
+  const createSubmissionCard = (entry: PendingEntry): HTMLElement => {
+    const card = document.createElement('article');
+    card.className = 'pending-card';
+
+    const title = document.createElement('h3');
+    title.textContent = entry.roleTitle;
+    card.appendChild(title);
+
+    const meta = document.createElement('p');
+    meta.textContent = `${entry.industry} · ${entry.seniority} · ${entry.location} · ${entry.workMode} · ${entry.yearsExperience}y exp`;
+    card.appendChild(meta);
+
+    card.appendChild(createInfoParagraph('Submitted', new Date(entry.createdAt).toLocaleString()));
+    card.appendChild(createInfoParagraph('Current review notes', entry.reviewNotes));
+
+    const details = document.createElement('details');
+    details.className = 'submission-details';
+    const summary = document.createElement('summary');
+    summary.textContent = 'View full submission';
+    details.appendChild(summary);
+
+    details.appendChild(createInfoParagraph('Salary range', entry.salaryRange));
+    details.appendChild(createInfoParagraph('Education path', entry.educationPath));
+    details.appendChild(createInfoParagraph('Submitter type', entry.submitterType));
+    details.appendChild(createInfoParagraph('Contact email', entry.contactEmail));
+    details.appendChild(createInfoParagraph('Tools used', (entry.toolsUsed ?? []).join(', ')));
+    details.appendChild(createInfoParagraph('Day-to-day', entry.dayToDay));
+    details.appendChild(createInfoParagraph('Best parts', entry.bestParts));
+    details.appendChild(createInfoParagraph('Hardest parts', entry.hardestParts));
+    details.appendChild(
+      createInfoParagraph('Recommendation to students', entry.recommendationToStudents),
+    );
+    card.appendChild(details);
+
+    const noteLabel = document.createElement('label');
+    noteLabel.textContent = 'Optional review note';
+    const noteInput = document.createElement('textarea');
+    noteInput.rows = 3;
+    noteInput.placeholder = 'Reason for rejection or approval context';
+    noteLabel.appendChild(noteInput);
+    card.appendChild(noteLabel);
+
+    const actions = document.createElement('div');
+    actions.className = 'cta-row';
+    const approveButton = document.createElement('button');
+    approveButton.className = 'btn btn-primary';
+    approveButton.dataset.action = 'approved';
+    approveButton.dataset.id = entry.id;
+    approveButton.textContent = 'Approve';
+    const rejectButton = document.createElement('button');
+    rejectButton.className = 'btn btn-secondary';
+    rejectButton.dataset.action = 'rejected';
+    rejectButton.dataset.id = entry.id;
+    rejectButton.textContent = 'Reject';
+    actions.appendChild(approveButton);
+    actions.appendChild(rejectButton);
+    card.appendChild(actions);
+
+    return card;
+  };
+
+  if (!supabaseUrl || !supabaseAnonKey) {
+    authStatus.textContent =
+      'Missing Supabase public config. Set PUBLIC_SUPABASE_URL and PUBLIC_SUPABASE_ANON_KEY.';
+    loginForm.classList.add('hidden');
+  } else {
+    const supabase = createClient(supabaseUrl, supabaseAnonKey);
+    let activeToken = '';
+    let activeEmail = '';
+
+    const setSignedOutState = () => {
+      activeToken = '';
+      activeEmail = '';
+      loginForm.classList.remove('hidden');
+      sessionActions.classList.add('hidden');
+      pendingSummary.textContent = 'Sign in to load pending submissions.';
+      pendingList.innerHTML = '';
+      authStatus.textContent = '';
+    };
+
+    const loadPending = async () => {
+      if (!activeToken) {
+        return;
+      }
+
+      pendingSummary.textContent = 'Loading pending submissions...';
+
+      const response = await fetch('/api/moderate', {
+        headers: {
+          Authorization: `Bearer ${activeToken}`,
+        },
+      });
+      const body = await response.json();
+
+      if (!response.ok || !body.ok) {
+        pendingSummary.textContent = body.message ?? 'Failed to load pending queue.';
+        return;
+      }
+
+      const pending = body.pending ?? [];
+      pendingSummary.textContent = pending.length
+        ? `${pending.length} pending submissions`
+        : 'No pending submissions right now.';
+      pendingList.innerHTML = '';
+
+      for (const entry of pending) {
+        pendingList.appendChild(createSubmissionCard(entry));
+      }
+    };
+
+    const refreshAuthState = async () => {
+      const { data, error } = await supabase.auth.getSession();
+      const session = data.session;
+
+      if (error || !session) {
+        setSignedOutState();
+        return;
+      }
+
+      activeToken = session.access_token;
+      activeEmail = session.user.email ?? '';
+      authStatus.textContent = `Signed in as ${activeEmail}`;
+      loginForm.classList.add('hidden');
+      sessionActions.classList.remove('hidden');
+      await loadPending();
+    };
+
+    loginForm.addEventListener('submit', async (event) => {
+      event.preventDefault();
+      const email = emailInput.value.trim();
+      if (!email) {
+        authStatus.textContent = 'Enter your moderator email first.';
+        return;
+      }
+
+      authStatus.textContent = 'Sending magic link...';
+      const { error } = await supabase.auth.signInWithOtp({
+        email,
+        options: {
+          emailRedirectTo: `${window.location.origin}/staff/moderation`,
+        },
+      });
+
+      authStatus.textContent = error
+        ? error.message
+        : 'Magic link sent. Open your email and return to this page.';
+    });
+
+    refreshPendingButton.addEventListener('click', async () => {
+      await loadPending();
+    });
+
+    signOutButton.addEventListener('click', async () => {
+      await supabase.auth.signOut();
+      setSignedOutState();
+    });
+
+    pendingList.addEventListener('click', async (event) => {
+      const target = event.target;
+      if (!(target instanceof HTMLButtonElement)) {
+        return;
+      }
+
+      const action = target.dataset.action;
+      const submissionId = target.dataset.id;
+      if (!submissionId || (action !== 'approved' && action !== 'rejected')) {
+        return;
+      }
+
+      const card = target.closest('.pending-card');
+      const noteInput = card?.querySelector('textarea');
+      const reviewNotes = noteInput instanceof HTMLTextAreaElement ? noteInput.value.trim() : '';
+
+      target.disabled = true;
+      const response = await fetch('/api/moderate', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${activeToken}`,
+        },
+        body: JSON.stringify({
+          id: submissionId,
+          status: action,
+          reviewNotes: reviewNotes || undefined,
+        }),
+      });
+
+      const body = await response.json();
+      if (!response.ok || !body.ok) {
+        authStatus.textContent = body.message ?? 'Failed to update moderation status.';
+        target.disabled = false;
+        return;
+      }
+
+      authStatus.textContent = `Submission ${submissionId} marked as ${action}.`;
+      await loadPending();
+    });
+
+    supabase.auth.onAuthStateChange(() => {
+      void refreshAuthState();
+    });
+
+    void refreshAuthState();
+  }
+</script>
+
+<style>
+  .hidden {
+    display: none;
+  }
+
+  .auth-form {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.75rem;
+    align-items: end;
+  }
+
+  .auth-form label {
+    display: grid;
+    gap: 0.35rem;
+    color: var(--ink-soft);
+    font-weight: 700;
+    min-width: min(400px, 100%);
+  }
+
+  .auth-form input,
+  .pending-card textarea {
+    font: inherit;
+    border: 1px solid var(--line);
+    background: #fff;
+    border-radius: 10px;
+    padding: 0.48rem 0.55rem;
+  }
+
+  .pending-list {
+    display: grid;
+    gap: 0.8rem;
+  }
+
+  .pending-card {
+    border: 1px solid var(--line);
+    border-radius: 14px;
+    padding: 0.9rem;
+    background: #fff;
+    display: grid;
+    gap: 0.55rem;
+  }
+
+  .pending-card h3,
+  .pending-card p {
+    margin: 0;
+  }
+
+  .pending-card p {
+    color: var(--ink-soft);
+  }
+
+  .pending-card label {
+    display: grid;
+    gap: 0.35rem;
+    color: var(--ink-soft);
+    font-weight: 700;
+  }
+
+  .submission-details {
+    border: 1px solid var(--line);
+    border-radius: 10px;
+    padding: 0.55rem 0.7rem;
+    background: #fcfbf8;
+  }
+
+  .submission-details summary {
+    cursor: pointer;
+    font-weight: 700;
+    color: var(--ink-strong);
+    margin-bottom: 0.5rem;
+  }
+</style>

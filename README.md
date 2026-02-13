@@ -9,7 +9,8 @@ JobScope is a career-discovery website where students and early-career users can
 - `/jobs` filterable directory
 - `/jobs/[slug]` role detail page
 - `/share` structured contribution form
-- `/moderation` moderator queue UI (Supabase Auth + whitelist)
+- `/staff/moderation` moderator queue UI (Supabase Auth + whitelist, unlinked from public nav)
+- `/moderation` compatibility redirect to `/staff/moderation`
 - `/api/share` submission endpoint (`pending` by default)
 - `/api/moderate` moderator approve/reject endpoint
 - `/about`, `/guidelines`
@@ -100,7 +101,7 @@ with check (
    - `MODERATOR_EMAILS` (comma-separated, e.g. `you@email.com`)
 
 4. Create moderator users in Supabase Auth using those emails.
-5. Open `/moderation`, sign in via magic link, approve/reject pending submissions.
+5. Open `/staff/moderation`, sign in via magic link, approve/reject pending submissions.
 
 ## Notes
 
