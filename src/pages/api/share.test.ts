@@ -38,6 +38,8 @@ describe('POST /api/share', () => {
     const body = await response.json();
     expect(body.ok).toBe(true);
     expect(body.status).toBe('pending');
+    expect(body.submissionId).toBeDefined();
+    expect(['local-fallback', 'supabase']).toContain(body.storage);
   });
 
   it('rejects invalid submissions with field errors', async () => {

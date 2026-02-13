@@ -1,5 +1,6 @@
 import type { APIRoute } from 'astro';
 
+import { createPendingSubmission } from '../../lib/job-profiles-repository';
 import {
   assessSubmissionForModeration,
   normalizeSubmission,
@@ -61,12 +62,28 @@ export const POST: APIRoute = async ({ request }) => {
 
   const normalized = normalizeSubmission(parsed.data);
   const moderation = assessSubmissionForModeration(normalized);
+  try {
+    const persisted = await createPendingSubmission(normalized, moderation);
 
-  return json({
-    ok: true,
-    message: 'Submission received. It is now pending manual moderation.',
-    status: moderation.status,
-    moderation,
-    submission: normalized,
-  });
+    return json({
+      ok: true,
+      message: 'Submission received. It is now pending manual moderation.',
+      status: moderation.status,
+      submissionId: persisted.id,
+      slug: persisted.slug,
+      storage: persisted.storage,
+      moderation,
+    });
+  } catch (error) {
+    return json(
+      {
+        ok: false,
+        message:
+          error instanceof Error
+            ? error.message
+            : 'Submission could not be persisted. Please try again.',
+      },
+      500,
+    );
+  }
 };

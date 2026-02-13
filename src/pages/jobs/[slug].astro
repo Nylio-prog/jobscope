@@ -1,9 +1,9 @@
 ---
 import Layout from '../../layouts/Layout.astro';
-import { getJobBySlug } from '../../lib/jobs';
+import { getApprovedJobProfileBySlug } from '../../lib/job-profiles-repository';
 
 const slug = Astro.params.slug ?? '';
-const job = getJobBySlug(slug);
+const job = await getApprovedJobProfileBySlug(slug);
 
 if (!job) {
   Astro.response.status = 404;

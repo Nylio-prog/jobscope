@@ -5,14 +5,11 @@ import { describe, expect, it } from 'vitest';
 
 const REQUIRED_ROUTE_FILES = [
   'src/pages/index.astro',
-  'src/pages/1.astro',
-  'src/pages/2.astro',
-  'src/pages/3.astro',
   'src/pages/4.astro',
-  'src/pages/5.astro',
   'src/pages/jobs/index.astro',
   'src/pages/jobs/[slug].astro',
   'src/pages/share.astro',
+  'src/pages/moderation.astro',
   'src/pages/about.astro',
   'src/pages/guidelines.astro',
 ];

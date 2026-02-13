@@ -28,17 +28,17 @@ Last updated: 2026-02-13
 - `DONE` Implement shared CTA, cards, chips, and footer modules.
 
 ## Phase 4 - Homepage Variants
-- `DONE` Build `/1` Career City.
-- `DONE` Build `/2` Orbit of Work.
-- `DONE` Build `/3` A Day In The Job.
-- `DONE` Build `/4` Wall of Paths.
-- `DONE` Build `/5` Mission Control.
+- `DONE` Keep `/4` Wall of Paths as the primary homepage.
+- `DONE` Route `/` to Wall of Paths experience.
+- `DONE` Redirect legacy concept routes (`/1`, `/2`, `/3`, `/5`) to `/`.
 
 ## Phase 5 - Core Product Flows
 - `DONE` Build `/jobs` directory with filters.
 - `DONE` Build `/jobs/[slug]` detail page.
 - `DONE` Build `/share` form with validation and submission endpoint.
 - `DONE` Add moderation status handling and clear user messaging.
+- `DONE` Connect Supabase persistence for approved reads and pending submissions.
+- `DONE` Add authenticated moderator flow (email magic link + approve/reject endpoint).
 
 ## Phase 6 - Automated Tests and QA
 - `DONE` Unit tests for schemas and core utilities.
@@ -58,6 +58,6 @@ Last updated: 2026-02-13
 2. `npm run test:coverage`: enforce coverage report generation.
 3. `npm run build`: production build must succeed.
 4. Manual smoke checks:
-- `/`, `/1`, `/2`, `/3`, `/4`, `/5`
-- `/jobs`, `/jobs/[slug]`, `/share`
+- `/` (Wall of Paths), `/4` (redirect alias)
+- `/jobs`, `/jobs/[slug]`, `/share`, `/moderation`
 - API submission validation behavior
