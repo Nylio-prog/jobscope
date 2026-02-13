@@ -58,10 +58,10 @@ export const shareSubmissionSchema = jobProfileSchema
     bestParts: true,
     hardestParts: true,
     recommendationToStudents: true,
-    yearsExperience: true,
     submitterType: true,
   })
   .extend({
+    yearsExperience: z.coerce.number().int().min(0).max(50),
     toolsUsed: z
       .union([z.array(z.string().min(1).max(64)).max(20), z.string().max(300)])
       .transform((value) => {

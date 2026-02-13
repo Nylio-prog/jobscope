@@ -112,27 +112,96 @@ import { INDUSTRIES, SENIORITY_LEVELS, SUBMITTER_TYPES, WORK_MODES } from '../li
   const status = document.querySelector('#share-status');
 
   if (form instanceof HTMLFormElement && status instanceof HTMLParagraphElement) {
+    const clearFieldErrors = () => {
+      const controls = form.querySelectorAll('input, select, textarea');
+      for (const control of controls) {
+        if (
+          control instanceof HTMLInputElement ||
+          control instanceof HTMLSelectElement ||
+          control instanceof HTMLTextAreaElement
+        ) {
+          control.classList.remove('field-error');
+          control.removeAttribute('aria-invalid');
+        }
+      }
+
+      const messages = form.querySelectorAll('.field-message');
+      for (const message of messages) {
+        message.remove();
+      }
+    };
+
+    const applyFieldErrors = (errors: unknown) => {
+      if (!errors || typeof errors !== 'object') {
+        return;
+      }
+
+      let firstInvalidControl = null;
+      for (const [name, messages] of Object.entries(errors)) {
+        const control = form.querySelector(`[name="${name}"]`);
+        if (
+          !(
+            control instanceof HTMLInputElement ||
+            control instanceof HTMLSelectElement ||
+            control instanceof HTMLTextAreaElement
+          )
+        ) {
+          continue;
+        }
+
+        control.classList.add('field-error');
+        control.setAttribute('aria-invalid', 'true');
+        if (!firstInvalidControl) {
+          firstInvalidControl = control;
+        }
+
+        if (Array.isArray(messages) && messages.length > 0) {
+          const helper = document.createElement('p');
+          helper.className = 'field-message';
+          helper.textContent = messages[0];
+          control.insertAdjacentElement('afterend', helper);
+        }
+      }
+
+      if (firstInvalidControl) {
+        firstInvalidControl.focus();
+      }
+    };
+
     form.addEventListener('submit', async (event) => {
       event.preventDefault();
+      clearFieldErrors();
+      status.classList.remove('status-error');
       status.textContent = 'Submitting...';
 
       const formData = new FormData(form);
       const payload = Object.fromEntries(formData.entries());
+      const submissionPayload = {
+        ...payload,
+        yearsExperience: Number(payload.yearsExperience),
+      };
 
-      const response = await fetch('/api/share', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(payload),
-      });
+      try {
+        const response = await fetch('/api/share', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(submissionPayload),
+        });
 
-      const data = await response.json();
-      if (response.ok) {
-        form.reset();
-        status.textContent = data.message;
-        return;
+        const data = await response.json();
+        if (response.ok) {
+          form.reset();
+          status.textContent = data.message;
+          return;
+        }
+
+        status.classList.add('status-error');
+        applyFieldErrors(data.errors);
+        status.textContent = data.message ?? 'Submission failed. Please review and try again.';
+      } catch {
+        status.classList.add('status-error');
+        status.textContent = 'Network error while submitting. Please try again.';
       }
-
-      status.textContent = data.message ?? 'Submission failed. Please review and try again.';
     });
   }
 </script>
@@ -161,6 +230,18 @@ import { INDUSTRIES, SENIORITY_LEVELS, SUBMITTER_TYPES, WORK_MODES } from '../li
     padding: 0.52rem 0.55rem;
   }
 
+  .share-form .field-error {
+    border-color: #c22d1d;
+    box-shadow: 0 0 0 1px rgba(194, 45, 29, 0.2);
+  }
+
+  .field-message {
+    margin: 0;
+    color: #9b2014;
+    font-size: 0.82rem;
+    font-weight: 600;
+  }
+
   .full {
     grid-column: 1 / -1;
   }
@@ -169,5 +250,9 @@ import { INDUSTRIES, SENIORITY_LEVELS, SUBMITTER_TYPES, WORK_MODES } from '../li
     margin: 0;
     color: var(--ink-soft);
     align-self: center;
+  }
+
+  #share-status.status-error {
+    color: #9b2014;
   }
 </style>

@@ -64,4 +64,16 @@ describe('submission utilities', () => {
       expect(normalized.contactEmail).toBeUndefined();
     }
   });
+
+  it('accepts yearsExperience from form strings', () => {
+    const parsed = validateShareSubmission({
+      ...basePayload,
+      yearsExperience: '3',
+    });
+
+    expect(parsed.success).toBe(true);
+    if (parsed.success) {
+      expect(parsed.data.yearsExperience).toBe(3);
+    }
+  });
 });
