@@ -1,0 +1,65 @@
+---
+import type { JobProfile } from '../lib/job-schema';
+
+type Props = {
+  job: JobProfile;
+};
+
+const { job } = Astro.props;
+---
+
+<article class="panel job-card">
+  <div class="job-meta">
+    <span>{job.industry}</span>
+    <span>{job.workMode}</span>
+    <span>{job.yearsExperience}y exp</span>
+  </div>
+  <h3><a href={`/jobs/${job.slug}`}>{job.roleTitle}</a></h3>
+  <p class="job-location">{job.location}</p>
+  <p class="job-summary">{job.dayToDay}</p>
+  <p class="job-reco"><strong>Advice:</strong> {job.recommendationToStudents}</p>
+</article>
+
+<style>
+  .job-card {
+    display: grid;
+    gap: 0.65rem;
+  }
+
+  .job-meta {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.4rem;
+    font-size: 0.8rem;
+  }
+
+  .job-meta span {
+    padding: 0.16rem 0.45rem;
+    border: 1px solid var(--line);
+    border-radius: 999px;
+    background: #fff;
+    color: var(--ink-soft);
+  }
+
+  .job-card h3 {
+    margin: 0;
+    font-size: 1.2rem;
+  }
+
+  .job-card h3 a {
+    text-decoration: none;
+  }
+
+  .job-location {
+    margin: 0;
+    color: var(--ink-soft);
+    font-size: 0.95rem;
+  }
+
+  .job-summary,
+  .job-reco {
+    margin: 0;
+    color: var(--ink-soft);
+    font-size: 0.94rem;
+  }
+</style>

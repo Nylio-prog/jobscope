@@ -1,0 +1,67 @@
+---
+import Layout from '../layouts/Layout.astro';
+import { getApprovedJobs } from '../lib/jobs';
+
+const [morning, midday, evening] = getApprovedJobs().slice(0, 3);
+---
+
+<Layout title="A Day In The Job" description="Narrative view of a full day across roles.">
+  <section class="page-hero">
+    <p><strong>/3 A Day In The Job</strong></p>
+    <h1>Follow a real workday from morning to evening.</h1>
+    <p>This timeline concept emphasizes rhythm, context shifts, and advice from professionals.</p>
+  </section>
+
+  <nav class="timeline-nav panel" aria-label="Timeline sections">
+    <a href="#morning">Morning</a>
+    <a href="#midday">Midday</a>
+    <a href="#evening">Evening</a>
+  </nav>
+
+  <section id="morning" class="panel chapter animate-rise">
+    <h2>Morning Focus: {morning.roleTitle}</h2>
+    <p>{morning.dayToDay}</p>
+    <a class="btn btn-secondary" href={`/jobs/${morning.slug}`}>Read full profile</a>
+  </section>
+
+  <section id="midday" class="panel chapter animate-rise">
+    <h2>Midday Pressure: {midday.roleTitle}</h2>
+    <p>{midday.hardestParts}</p>
+    <a class="btn btn-secondary" href={`/jobs/${midday.slug}`}>Read full profile</a>
+  </section>
+
+  <section id="evening" class="panel chapter animate-rise">
+    <h2>Evening Reflection: {evening.roleTitle}</h2>
+    <p>{evening.recommendationToStudents}</p>
+    <a class="btn btn-secondary" href={`/jobs/${evening.slug}`}>Read full profile</a>
+  </section>
+</Layout>
+
+<style>
+  .timeline-nav {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.6rem;
+    margin-bottom: 1rem;
+  }
+
+  .timeline-nav a {
+    text-decoration: none;
+    padding: 0.35rem 0.65rem;
+    border-radius: 999px;
+    background: rgba(15, 76, 129, 0.1);
+  }
+
+  .chapter {
+    margin-bottom: 0.9rem;
+    background: linear-gradient(160deg, rgba(240, 139, 62, 0.07), transparent 40%), var(--bg-panel);
+  }
+
+  .chapter h2 {
+    margin-top: 0;
+  }
+
+  .chapter p {
+    color: var(--ink-soft);
+  }
+</style>

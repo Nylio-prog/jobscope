@@ -1,0 +1,127 @@
+---
+import JobCard from '../../components/JobCard.astro';
+import Layout from '../../layouts/Layout.astro';
+import {
+  applyJobFilters,
+  getApprovedJobs,
+  getDirectoryFacets,
+  parseDirectoryFilters,
+  sortJobs,
+} from '../../lib/jobs';
+
+const filters = parseDirectoryFilters(Astro.url.searchParams);
+const allJobs = getApprovedJobs();
+const filteredJobs = sortJobs(applyJobFilters(allJobs, filters), filters.sort);
+const facets = getDirectoryFacets(allJobs);
+---
+
+<Layout title="Jobs Directory" description="Browse approved job stories with filters.">
+  <section class="page-hero">
+    <p><strong>Jobs Directory</strong></p>
+    <h1>Browse real experiences, not vague titles.</h1>
+    <p>Filter by industry, work mode, or keyword to quickly shortlist relevant roles.</p>
+  </section>
+
+  <form class="panel filters" method="get">
+    <label>
+      Keyword
+      <input
+        type="search"
+        name="q"
+        value={filters.query ?? ''}
+        placeholder="nurse, product, policy..."
+      />
+    </label>
+
+    <label>
+      Industry
+      <select name="industry">
+        <option value="">All industries</option>
+        {
+          facets.industries.map((industry) => (
+            <option value={industry} selected={filters.industry === industry}>
+              {industry}
+            </option>
+          ))
+        }
+      </select>
+    </label>
+
+    <label>
+      Work mode
+      <select name="workMode">
+        <option value="">All modes</option>
+        {
+          facets.workModes.map((workMode) => (
+            <option value={workMode} selected={filters.workMode === workMode}>
+              {workMode}
+            </option>
+          ))
+        }
+      </select>
+    </label>
+
+    <label>
+      Sort
+      <select name="sort">
+        <option value="newest" selected={filters.sort === 'newest'}>Newest first</option>
+        <option value="title-asc" selected={filters.sort === 'title-asc'}>Title A-Z</option>
+        <option value="experience-asc" selected={filters.sort === 'experience-asc'}>
+          Experience low-high
+        </option>
+        <option value="experience-desc" selected={filters.sort === 'experience-desc'}>
+          Experience high-low
+        </option>
+      </select>
+    </label>
+
+    <div class="cta-row">
+      <button class="btn btn-primary" type="submit">Apply filters</button>
+      <a class="btn btn-secondary" href="/jobs">Reset</a>
+    </div>
+  </form>
+
+  <p class="result-count">{filteredJobs.length} jobs found</p>
+  <section class="job-grid">
+    {filteredJobs.map((job) => <JobCard job={job} />)}
+  </section>
+</Layout>
+
+<style>
+  .filters {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));
+    gap: 0.9rem;
+  }
+
+  .filters label {
+    display: grid;
+    gap: 0.3rem;
+    font-weight: 700;
+    color: var(--ink-soft);
+  }
+
+  .filters input,
+  .filters select,
+  .filters button {
+    font: inherit;
+  }
+
+  .filters input,
+  .filters select {
+    border: 1px solid var(--line);
+    background: #fff;
+    border-radius: 10px;
+    padding: 0.48rem 0.55rem;
+  }
+
+  .result-count {
+    color: var(--ink-soft);
+  }
+
+  .job-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    gap: 0.9rem;
+  }
+</style>

@@ -1,0 +1,46 @@
+---
+type Props = {
+  id: string;
+  title: string;
+  description: string;
+  focus: string;
+};
+
+const { id, title, description, focus } = Astro.props;
+---
+
+<article class="panel variant-card animate-rise">
+  <p class="variant-id">/{id}</p>
+  <h3>{title}</h3>
+  <p>{description}</p>
+  <p class="variant-focus"><strong>Best for:</strong> {focus}</p>
+  <a class="btn btn-secondary" href={`/${id}`}>Open concept</a>
+</article>
+
+<style>
+  .variant-card {
+    display: grid;
+    gap: 0.6rem;
+  }
+
+  .variant-id {
+    margin: 0;
+    font-size: 0.85rem;
+    color: var(--brand-primary);
+    font-weight: 700;
+  }
+
+  .variant-card h3 {
+    margin: 0;
+    font-size: 1.2rem;
+  }
+
+  .variant-card p {
+    margin: 0;
+    color: var(--ink-soft);
+  }
+
+  .variant-focus {
+    color: var(--ink-strong);
+  }
+</style>

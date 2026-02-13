@@ -2,3 +2,6 @@ dist
 .astro
 node_modules
 .npm-cache
+coverage
+.vercel
+planning/*.md

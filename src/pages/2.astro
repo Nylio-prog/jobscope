@@ -1,0 +1,75 @@
+---
+import Layout from '../layouts/Layout.astro';
+import { getApprovedJobs } from '../lib/jobs';
+
+const jobs = getApprovedJobs().slice(0, 8);
+---
+
+<Layout title="Orbit of Work" description="Compare job paths in a clustered orbit map.">
+  <section class="page-hero">
+    <p><strong>/2 Orbit of Work</strong></p>
+    <h1>Role clusters rotating around your priorities.</h1>
+    <p>
+      Use this concept for quick comparisons by industry, work mode, and experience level before
+      diving into details.
+    </p>
+  </section>
+
+  <section class="orbit panel">
+    {
+      jobs.map((job, index) => (
+        <a class="orbiter animate-rise" style={`--i:${index};`} href={`/jobs/${job.slug}`}>
+          <span>{job.roleTitle}</span>
+          <small>{job.workMode}</small>
+        </a>
+      ))
+    }
+  </section>
+</Layout>
+
+<style>
+  .orbit {
+    position: relative;
+    min-height: 420px;
+    overflow: hidden;
+    background: radial-gradient(circle at center, rgba(15, 76, 129, 0.2), transparent 42%), #122130;
+    color: #f2f5f7;
+  }
+
+  .orbiter {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 180px;
+    padding: 0.8rem;
+    display: grid;
+    gap: 0.25rem;
+    border-radius: 14px;
+    background: rgba(255, 255, 255, 0.11);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    backdrop-filter: blur(4px);
+    text-decoration: none;
+    transform: rotate(calc(var(--i) * 45deg)) translateY(calc(-1 * (130px + (var(--i) % 2) * 36px)))
+      rotate(calc(var(--i) * -45deg));
+  }
+
+  .orbiter small {
+    opacity: 0.8;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+  }
+
+  @media (max-width: 680px) {
+    .orbit {
+      display: grid;
+      gap: 0.8rem;
+      min-height: 0;
+    }
+
+    .orbiter {
+      position: static;
+      width: auto;
+      transform: none;
+    }
+  }
+</style>

@@ -1,0 +1,28 @@
+---
+const pathname = Astro.url.pathname;
+
+const links = [
+  { href: '/', label: 'Gateway' },
+  { href: '/jobs', label: 'Jobs' },
+  { href: '/share', label: 'Share Story' },
+  { href: '/about', label: 'About' },
+  { href: '/guidelines', label: 'Guidelines' },
+];
+---
+
+<header class="site-header">
+  <a class="brand" href="/">
+    <span class="brand-dot" aria-hidden="true"></span>
+    <span class="brand-title">JobScope</span>
+  </a>
+
+  <nav class="site-nav" aria-label="Main navigation">
+    {
+      links.map((link) => (
+        <a class={pathname === link.href ? 'is-active' : undefined} href={link.href}>
+          {link.label}
+        </a>
+      ))
+    }
+  </nav>
+</header>

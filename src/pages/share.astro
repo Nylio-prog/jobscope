@@ -1,0 +1,173 @@
+---
+import Layout from '../layouts/Layout.astro';
+import { INDUSTRIES, SENIORITY_LEVELS, SUBMITTER_TYPES, WORK_MODES } from '../lib/job-schema';
+---
+
+<Layout title="Share Your Job Story" description="Submit a structured career story for moderation.">
+  <section class="page-hero">
+    <p><strong>Share Your Story</strong></p>
+    <h1>Help students understand what this work is really like.</h1>
+    <p>
+      No login required. Every submission is validated and queued for manual moderation before it
+      appears in the public directory.
+    </p>
+  </section>
+
+  <form class="panel share-form" id="share-form">
+    <label>
+      Role title *
+      <input name="roleTitle" required />
+    </label>
+
+    <label>
+      Industry *
+      <select name="industry" required>
+        <option value="">Select one</option>
+        {INDUSTRIES.map((industry) => <option value={industry}>{industry}</option>)}
+      </select>
+    </label>
+
+    <label>
+      Seniority *
+      <select name="seniority" required>
+        <option value="">Select one</option>
+        {SENIORITY_LEVELS.map((level) => <option value={level}>{level}</option>)}
+      </select>
+    </label>
+
+    <label>
+      Location *
+      <input name="location" placeholder="City, country or Remote" required />
+    </label>
+
+    <label>
+      Work mode *
+      <select name="workMode" required>
+        <option value="">Select one</option>
+        {WORK_MODES.map((mode) => <option value={mode}>{mode}</option>)}
+      </select>
+    </label>
+
+    <label>
+      Years of experience *
+      <input type="number" min="0" max="50" name="yearsExperience" required />
+    </label>
+
+    <label>
+      Salary range (optional)
+      <input name="salaryRange" placeholder="$60k-$75k" />
+    </label>
+
+    <label>
+      Education path (optional)
+      <input name="educationPath" />
+    </label>
+
+    <label class="full">
+      Tools used (comma-separated) *
+      <input name="toolsUsed" placeholder="Excel, SQL, Figma" required />
+    </label>
+
+    <label class="full">
+      What do you do day-to-day? *
+      <textarea name="dayToDay" rows="4" required></textarea>
+    </label>
+
+    <label class="full">
+      Best parts *
+      <textarea name="bestParts" rows="3" required></textarea>
+    </label>
+
+    <label class="full">
+      Hardest parts *
+      <textarea name="hardestParts" rows="3" required></textarea>
+    </label>
+
+    <label class="full">
+      Recommendation to students *
+      <textarea name="recommendationToStudents" rows="3" required></textarea>
+    </label>
+
+    <label>
+      Submitter type *
+      <select name="submitterType" required>
+        {SUBMITTER_TYPES.map((type) => <option value={type}>{type}</option>)}
+      </select>
+    </label>
+
+    <label>
+      Contact email (optional)
+      <input name="contactEmail" type="email" placeholder="name@email.com" />
+    </label>
+
+    <div class="full cta-row">
+      <button class="btn btn-primary" type="submit">Submit for moderation</button>
+      <p id="share-status" role="status" aria-live="polite"></p>
+    </div>
+  </form>
+</Layout>
+
+<script>
+  const form = document.querySelector('#share-form');
+  const status = document.querySelector('#share-status');
+
+  if (form instanceof HTMLFormElement && status instanceof HTMLParagraphElement) {
+    form.addEventListener('submit', async (event) => {
+      event.preventDefault();
+      status.textContent = 'Submitting...';
+
+      const formData = new FormData(form);
+      const payload = Object.fromEntries(formData.entries());
+
+      const response = await fetch('/api/share', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload),
+      });
+
+      const data = await response.json();
+      if (response.ok) {
+        form.reset();
+        status.textContent = data.message;
+        return;
+      }
+
+      status.textContent = data.message ?? 'Submission failed. Please review and try again.';
+    });
+  }
+</script>
+
+<style>
+  .share-form {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    gap: 0.9rem;
+  }
+
+  .share-form label {
+    display: grid;
+    gap: 0.35rem;
+    font-weight: 700;
+    color: var(--ink-soft);
+  }
+
+  .share-form input,
+  .share-form select,
+  .share-form textarea {
+    font: inherit;
+    border: 1px solid var(--line);
+    background: #fff;
+    border-radius: 10px;
+    padding: 0.52rem 0.55rem;
+  }
+
+  .full {
+    grid-column: 1 / -1;
+  }
+
+  #share-status {
+    margin: 0;
+    color: var(--ink-soft);
+    align-self: center;
+  }
+</style>

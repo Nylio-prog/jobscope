@@ -1,0 +1,61 @@
+---
+import VariantCard from '../components/VariantCard.astro';
+import Layout from '../layouts/Layout.astro';
+---
+
+<Layout title="Gateway" description="Explore real career stories with five homepage concepts.">
+  <section class="page-hero animate-rise">
+    <p><strong>JobScope</strong></p>
+    <h1>See what jobs are actually like.</h1>
+    <p>
+      This gateway introduces five visual directions for exploring career stories, plus the core
+      directory and contribution flow.
+    </p>
+    <div class="cta-row">
+      <a class="btn btn-primary" href="/1">Recommended start: /1 Career City</a>
+      <a class="btn btn-secondary" href="/jobs">Browse all jobs</a>
+      <a class="btn btn-secondary" href="/share">Share your story</a>
+    </div>
+  </section>
+
+  <section class="variant-grid">
+    <VariantCard
+      id="1"
+      title="Career City"
+      description="District-based exploration with map-like scanning for industries."
+      focus="students who prefer visual exploration"
+    />
+    <VariantCard
+      id="2"
+      title="Orbit of Work"
+      description="Clustered role navigation around skill and lifestyle proximity."
+      focus="comparative role discovery"
+    />
+    <VariantCard
+      id="3"
+      title="A Day In The Job"
+      description="Narrative timeline that follows a full day in selected careers."
+      focus="people who want story-based context"
+    />
+    <VariantCard
+      id="4"
+      title="Wall of Paths"
+      description="Collage wall with quick filters and a playful browsing rhythm."
+      focus="broad exploration and fast scanning"
+    />
+    <VariantCard
+      id="5"
+      title="Mission Control"
+      description="Dashboard-style interface with summary signals and quick compare."
+      focus="analytical users comparing paths"
+    />
+  </section>
+</Layout>
+
+<style>
+  .variant-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+    gap: 0.9rem;
+  }
+</style>
