@@ -1,6 +1,13 @@
 ---
 import JobCard from './JobCard.astro';
-import { applyJobFilters, getDirectoryFacets, parseDirectoryFilters, sortJobs } from '../lib/jobs';
+import {
+  EXPERIENCE_BANDS,
+  PAGE_SIZE,
+  applyJobFilters,
+  getDirectoryFacets,
+  parseDirectoryFilters,
+  sortJobs,
+} from '../lib/jobs';
 import { listApprovedJobProfiles } from '../lib/job-profiles-repository';
 
 type Props = {
@@ -8,22 +15,77 @@ type Props = {
 };
 
 const { search } = Astro.props;
-
-const filters = parseDirectoryFilters(new URLSearchParams(search.replace(/^\?/, '')));
+const searchParams = new URLSearchParams(search.replace(/^\?/, ''));
+const filters = parseDirectoryFilters(searchParams);
 const allJobs = await listApprovedJobProfiles();
 const filteredJobs = sortJobs(applyJobFilters(allJobs, filters), filters.sort);
 const facets = getDirectoryFacets(allJobs);
+
+const compareSlugs = (filters.compare ?? []).filter(Boolean).slice(0, 3);
+const compareJobs = compareSlugs
+  .map((slug) => allJobs.find((job) => job.slug === slug))
+  .filter((job): job is NonNullable<typeof job> => Boolean(job));
+
+const totalJobs = filteredJobs.length;
+const totalPages = Math.max(1, Math.ceil(totalJobs / PAGE_SIZE));
+const currentPage = Math.min(Math.max(filters.page ?? 1, 1), totalPages);
+const pageStart = (currentPage - 1) * PAGE_SIZE;
+const pageJobs = filteredJobs.slice(pageStart, pageStart + PAGE_SIZE);
+const firstIndex = totalJobs === 0 ? 0 : pageStart + 1;
+const lastIndex = Math.min(pageStart + PAGE_SIZE, totalJobs);
+
+const topIndustrySuggestions = facets.industries.slice(0, 3);
+
+const buildJobsHref = (
+  updates: Record<string, string | undefined> = {},
+  options: {
+    addCompare?: string;
+    removeCompare?: string;
+    clearCompare?: boolean;
+  } = {},
+) => {
+  const params = new URLSearchParams(searchParams);
+
+  for (const [key, value] of Object.entries(updates)) {
+    if (!value) {
+      params.delete(key);
+      continue;
+    }
+
+    params.set(key, value);
+  }
+
+  let compare = [...new Set(params.getAll('compare').filter(Boolean))];
+  if (options.clearCompare) {
+    compare = [];
+  }
+  if (options.removeCompare) {
+    compare = compare.filter((slug) => slug !== options.removeCompare);
+  }
+  if (options.addCompare && !compare.includes(options.addCompare)) {
+    compare = [...compare, options.addCompare].slice(0, 3);
+  }
+
+  params.delete('compare');
+  for (const slug of compare) {
+    params.append('compare', slug);
+  }
+
+  const serialized = params.toString();
+  return serialized ? `/jobs?${serialized}` : '/jobs';
+};
 ---
 
 <form class="panel filters" method="get">
+  {
+    compareSlugs.map((slug) => (
+      <input type="hidden" name="compare" value={slug} />
+    ))
+  }
+
   <label>
     Keyword
-    <input
-      type="search"
-      name="q"
-      value={filters.query ?? ''}
-      placeholder="nurse, product, policy..."
-    />
+    <input type="search" name="q" value={filters.query ?? ''} placeholder="nurse, product, policy..." />
   </label>
 
   <label>
@@ -55,6 +117,44 @@ const facets = getDirectoryFacets(allJobs);
   </label>
 
   <label>
+    Seniority
+    <select name="seniority">
+      <option value="">All levels</option>
+      {
+        facets.seniorities.map((seniority) => (
+          <option value={seniority} selected={filters.seniority === seniority}>
+            {seniority}
+          </option>
+        ))
+      }
+    </select>
+  </label>
+
+  <label>
+    Experience band
+    <select name="experienceBand">
+      <option value="">All bands</option>
+      {
+        EXPERIENCE_BANDS.map((band) => (
+          <option value={band} selected={filters.experienceBand === band}>
+            {band} years
+          </option>
+        ))
+      }
+    </select>
+  </label>
+
+  <label>
+    Region / location
+    <input type="search" name="region" value={filters.region ?? ''} placeholder="e.g. London, US, Remote" />
+  </label>
+
+  <label class="toggle-label">
+    <input type="checkbox" name="salaryProvided" value="1" checked={filters.salaryProvided} />
+    <span>Only entries with salary range</span>
+  </label>
+
+  <label>
     Sort
     <select name="sort">
       <option value="newest" selected={filters.sort === 'newest'}>Newest first</option>
@@ -68,19 +168,123 @@ const facets = getDirectoryFacets(allJobs);
     </select>
   </label>
 
-  <div class="cta-row">
+  <div class="cta-row full-width">
     <button class="btn btn-primary" type="submit">Apply filters</button>
-    <a class="btn btn-secondary" href="/jobs">Reset</a>
+    <a class="btn btn-secondary" href={buildJobsHref({}, { clearCompare: compareSlugs.length === 0 })}>Reset</a>
   </div>
 </form>
 
+{compareJobs.length > 0 && (
+  <section class="panel compare-panel" aria-label="Compare selected roles">
+    <div class="compare-head">
+      <h2>Compare roles ({compareJobs.length}/3)</h2>
+      <div class="cta-row">
+        <a class="btn btn-secondary" href={buildJobsHref({}, { clearCompare: true })}>Clear compare</a>
+      </div>
+    </div>
+
+    <div class="compare-grid">
+      {
+        compareJobs.map((job) => (
+          <article>
+            <h3>{job.roleTitle}</h3>
+            <p><strong>Industry:</strong> {job.industry}</p>
+            <p><strong>Mode:</strong> {job.workMode}</p>
+            <p><strong>Experience:</strong> {job.yearsExperience} years</p>
+            <p><strong>Location:</strong> {job.location}</p>
+            <p>{job.recommendationToStudents}</p>
+            <div class="cta-row">
+              <a class="btn btn-secondary" href={`/jobs/${job.slug}`}>Open story</a>
+              <a class="btn btn-secondary" href={buildJobsHref({}, { removeCompare: job.slug })}>
+                Remove
+              </a>
+            </div>
+          </article>
+        ))
+      }
+    </div>
+  </section>
+)}
+
 <div class="results-head">
-  <p class="result-count">{filteredJobs.length} jobs found</p>
+  <p class="result-count">
+    {totalJobs} jobs found
+    {totalJobs > 0 && <span> (showing {firstIndex}-{lastIndex})</span>}
+  </p>
   <p class="result-tip">Open any story to see practical details, tools, and student advice.</p>
 </div>
-<section class="job-grid">
-  {filteredJobs.map((job) => <JobCard job={job} />)}
-</section>
+
+{
+  totalJobs === 0 ? (
+    <section class="panel no-results">
+      <h2>No matching roles yet.</h2>
+      <p>Try broadening your filters, or jump to one of these starter industries.</p>
+      <div class="cta-row">
+        <a class="btn btn-secondary" href="/jobs">Clear all filters</a>
+        {topIndustrySuggestions.map((industry) => (
+          <a class="btn btn-secondary" href={`/jobs?industry=${encodeURIComponent(industry)}`}>
+            {industry}
+          </a>
+        ))}
+      </div>
+    </section>
+  ) : (
+    <>
+      <section class="job-grid">
+        {
+          pageJobs.map((job) => {
+            const isCompared = compareSlugs.includes(job.slug);
+            const compareFull = compareSlugs.length >= 3 && !isCompared;
+
+            return (
+              <div class="job-slot">
+                <JobCard job={job} />
+                <div class="job-actions">
+                  {compareFull ? (
+                    <span class="compare-link disabled">Compare full (max 3)</span>
+                  ) : (
+                    <a
+                      class={`compare-link ${isCompared ? 'is-selected' : ''}`}
+                      href={
+                        isCompared
+                          ? buildJobsHref({}, { removeCompare: job.slug })
+                          : buildJobsHref({}, { addCompare: job.slug })
+                      }
+                    >
+                      {isCompared ? 'Remove from compare' : 'Add to compare'}
+                    </a>
+                  )}
+                </div>
+              </div>
+            );
+          })
+        }
+      </section>
+
+      {totalPages > 1 && (
+        <nav class="pagination" aria-label="Directory pagination">
+          <a
+            class={`btn btn-secondary ${currentPage <= 1 ? 'is-disabled' : ''}`}
+            href={currentPage <= 1 ? undefined : buildJobsHref({ page: String(currentPage - 1) })}
+            aria-disabled={currentPage <= 1}
+          >
+            Previous
+          </a>
+          <p>Page {currentPage} of {totalPages}</p>
+          <a
+            class={`btn btn-secondary ${currentPage >= totalPages ? 'is-disabled' : ''}`}
+            href={
+              currentPage >= totalPages ? undefined : buildJobsHref({ page: String(currentPage + 1) })
+            }
+            aria-disabled={currentPage >= totalPages}
+          >
+            Next
+          </a>
+        </nav>
+      )}
+    </>
+  )
+}
 
 <style>
   .filters {
@@ -113,6 +317,61 @@ const facets = getDirectoryFacets(allJobs);
     min-width: 0;
   }
 
+  .toggle-label {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.45rem;
+    align-self: end;
+  }
+
+  .toggle-label input {
+    width: auto;
+  }
+
+  .full-width {
+    grid-column: 1 / -1;
+  }
+
+  .compare-panel {
+    margin-top: 0.95rem;
+    display: grid;
+    gap: 0.8rem;
+  }
+
+  .compare-head {
+    display: flex;
+    justify-content: space-between;
+    gap: 0.8rem;
+    flex-wrap: wrap;
+  }
+
+  .compare-head h2 {
+    margin: 0;
+  }
+
+  .compare-grid {
+    display: grid;
+    gap: 0.8rem;
+    grid-template-columns: repeat(auto-fit, minmax(230px, 1fr));
+  }
+
+  .compare-grid article {
+    border: 1px solid var(--line);
+    border-radius: 12px;
+    padding: 0.75rem;
+    background: #fff;
+  }
+
+  .compare-grid h3,
+  .compare-grid p {
+    margin: 0;
+  }
+
+  .compare-grid p {
+    margin-top: 0.45rem;
+    color: var(--ink-soft);
+  }
+
   .result-count {
     margin: 0;
     color: var(--ink-soft);
@@ -132,15 +391,72 @@ const facets = getDirectoryFacets(allJobs);
     font-size: 0.92rem;
   }
 
+  .no-results h2 {
+    margin: 0;
+  }
+
+  .no-results p {
+    color: var(--ink-soft);
+  }
+
   .job-grid {
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
     gap: 0.9rem;
   }
 
+  .job-slot {
+    display: grid;
+    gap: 0.4rem;
+  }
+
+  .job-actions {
+    display: flex;
+    justify-content: end;
+  }
+
+  .compare-link {
+    font-weight: 700;
+    color: var(--brand-primary);
+    text-decoration: none;
+  }
+
+  .compare-link.is-selected {
+    color: var(--brand-accent);
+  }
+
+  .compare-link.disabled {
+    color: var(--ink-soft);
+    cursor: not-allowed;
+  }
+
+  .pagination {
+    margin-top: 0.9rem;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.7rem;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .pagination p {
+    margin: 0;
+    color: var(--ink-soft);
+    font-weight: 700;
+  }
+
+  .pagination .is-disabled {
+    pointer-events: none;
+    opacity: 0.45;
+  }
+
   @media (max-width: 720px) {
     .job-grid {
       grid-template-columns: 1fr;
+    }
+
+    .job-actions {
+      justify-content: start;
     }
   }
 </style>

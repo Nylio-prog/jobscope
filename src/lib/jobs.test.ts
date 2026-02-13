@@ -39,13 +39,41 @@ describe('jobs utilities', () => {
         q: 'policy',
         industry: 'Government',
         workMode: 'hybrid',
+        seniority: 'Mid',
+        experienceBand: '3-5',
+        salaryProvided: '1',
+        region: 'us',
+        compare: 'policy-analyst-public-sector',
         sort: 'title-asc',
+        page: '2',
       }),
     );
 
     expect(parsed.query).toBe('policy');
     expect(parsed.industry).toBe('Government');
     expect(parsed.workMode).toBe('hybrid');
+    expect(parsed.seniority).toBe('Mid');
+    expect(parsed.experienceBand).toBe('3-5');
+    expect(parsed.salaryProvided).toBe(true);
+    expect(parsed.region).toBe('us');
+    expect(parsed.compare).toEqual(['policy-analyst-public-sector']);
+    expect(parsed.page).toBe(2);
     expect(parsed.sort).toBe('title-asc');
+  });
+
+  it('filters by salary presence, seniority, and experience band', () => {
+    const jobs = getApprovedJobs();
+    const filtered = applyJobFilters(jobs, {
+      seniority: 'Senior',
+      experienceBand: '6-10',
+      salaryProvided: true,
+    });
+
+    expect(filtered.length).toBeGreaterThan(0);
+    expect(filtered.every((job) => job.seniority === 'Senior')).toBe(true);
+    expect(filtered.every((job) => job.yearsExperience >= 6 && job.yearsExperience <= 10)).toBe(
+      true,
+    );
+    expect(filtered.every((job) => Boolean(job.salaryRange))).toBe(true);
   });
 });

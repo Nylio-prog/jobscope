@@ -1,5 +1,5 @@
 ---
-import { getApprovedJobProfileBySlug } from '../lib/job-profiles-repository';
+import { getApprovedJobProfileBySlug, listApprovedJobProfiles } from '../lib/job-profiles-repository';
 
 type Props = {
   slug: string;
@@ -7,6 +7,22 @@ type Props = {
 
 const { slug } = Astro.props;
 const job = await getApprovedJobProfileBySlug(slug);
+const relatedJobs = job
+  ? (await listApprovedJobProfiles())
+      .filter((candidate) => candidate.slug !== job.slug)
+      .sort((left, right) => {
+        const sameIndustryDelta = Number(right.industry === job.industry) - Number(left.industry === job.industry);
+        if (sameIndustryDelta !== 0) {
+          return sameIndustryDelta;
+        }
+
+        return (
+          Math.abs(left.yearsExperience - job.yearsExperience) -
+          Math.abs(right.yearsExperience - job.yearsExperience)
+        );
+      })
+      .slice(0, 3)
+  : [];
 
 if (!job) {
   Astro.response.status = 404;
@@ -93,6 +109,27 @@ if (!job) {
           </article>
         </aside>
       </section>
+
+      {relatedJobs.length > 0 && (
+        <section class="panel related-roles" aria-label="Related roles">
+          <div class="related-head">
+            <h2>Related roles to compare</h2>
+            <a class="btn btn-secondary" href="/jobs">Browse full directory</a>
+          </div>
+          <div class="related-grid">
+            {
+              relatedJobs.map((related) => (
+                <article>
+                  <p><strong>{related.industry}</strong></p>
+                  <h3>{related.roleTitle}</h3>
+                  <p>{related.location}</p>
+                  <a class="btn btn-secondary" href={`/jobs/${related.slug}`}>Open story</a>
+                </article>
+              ))
+            }
+          </div>
+        </section>
+      )}
     </>
   ) : (
     <section class="page-hero">
@@ -243,6 +280,47 @@ if (!job) {
     border-radius: 999px;
     padding: 0.22rem 0.52rem;
     background: #fff;
+  }
+
+  .related-roles {
+    margin-top: 1rem;
+  }
+
+  .related-head {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 0.7rem;
+    flex-wrap: wrap;
+  }
+
+  .related-head h2 {
+    margin: 0;
+  }
+
+  .related-grid {
+    margin-top: 0.75rem;
+    display: grid;
+    gap: 0.75rem;
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  }
+
+  .related-grid article {
+    border: 1px solid var(--line);
+    border-radius: 12px;
+    padding: 0.7rem;
+    background: #fff;
+    display: grid;
+    gap: 0.45rem;
+  }
+
+  .related-grid h3,
+  .related-grid p {
+    margin: 0;
+  }
+
+  .related-grid p {
+    color: var(--ink-soft);
   }
 
   @media (max-width: 940px) {
