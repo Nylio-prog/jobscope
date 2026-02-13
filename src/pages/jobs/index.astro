@@ -10,6 +10,25 @@ import Layout from '../../layouts/Layout.astro';
     <p>Filter by industry, work mode, or keyword to quickly shortlist relevant roles.</p>
   </section>
 
+  <section class="panel collections" aria-label="Curated collections">
+    <h2>Curated collections</h2>
+    <p>Jump into focused role sets if you are exploring a specific path.</p>
+    <div class="collections-grid">
+      <a href="/jobs?industry=Healthcare&seniority=Entry">
+        <h3>Healthcare starter paths</h3>
+        <p>Entry roles with practical day-to-day details and student advice.</p>
+      </a>
+      <a href="/jobs?workMode=remote&experienceBand=0-2">
+        <h3>Remote-friendly entry roles</h3>
+        <p>Stories from roles with remote options and lower experience barriers.</p>
+      </a>
+      <a href="/jobs?industry=Software&seniority=Mid">
+        <h3>Mid-career software tracks</h3>
+        <p>See how responsibilities and tradeoffs evolve beyond junior roles.</p>
+      </a>
+    </div>
+  </section>
+
   <JobsDirectorySection search={Astro.url.search} server:defer>
     <div slot="fallback" class="stack" aria-live="polite" aria-busy="true">
       <section class="panel filters-skeleton">
@@ -35,6 +54,44 @@ import Layout from '../../layouts/Layout.astro';
 </Layout>
 
 <style>
+  .collections {
+    margin-bottom: 1rem;
+  }
+
+  .collections h2 {
+    margin: 0;
+  }
+
+  .collections p {
+    color: var(--ink-soft);
+  }
+
+  .collections-grid {
+    display: grid;
+    gap: 0.75rem;
+    grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));
+  }
+
+  .collections-grid a {
+    text-decoration: none;
+    border: 1px solid var(--line);
+    border-radius: 12px;
+    padding: 0.75rem;
+    background: #fff;
+  }
+
+  .collections-grid h3 {
+    margin: 0;
+    color: var(--ink-strong);
+    font-size: 1rem;
+  }
+
+  .collections-grid p {
+    margin: 0.35rem 0 0;
+    color: var(--ink-soft);
+    font-size: 0.92rem;
+  }
+
   .filters-skeleton {
     display: flex;
     flex-wrap: wrap;

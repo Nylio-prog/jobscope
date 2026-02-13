@@ -7,6 +7,13 @@ type Props = {
 
 const { slug } = Astro.props;
 const job = await getApprovedJobProfileBySlug(slug);
+const lastReviewedLabel = job
+  ? new Date(job.approvedAt ?? job.createdAt).toLocaleDateString('en-US', {
+      year: 'numeric',
+      month: 'long',
+      day: 'numeric',
+    })
+  : undefined;
 const relatedJobs = job
   ? (await listApprovedJobProfiles())
       .filter((candidate) => candidate.slug !== job.slug)
@@ -32,6 +39,24 @@ if (!job) {
 {
   job ? (
     <>
+      <script
+        is:inline
+        type="application/ld+json"
+        set:html={JSON.stringify({
+          '@context': 'https://schema.org',
+          '@type': 'Article',
+          headline: `${job.roleTitle} career story`,
+          description: job.dayToDay,
+          datePublished: job.createdAt,
+          dateModified: job.approvedAt ?? job.createdAt,
+          author: {
+            '@type': 'Person',
+            name: job.submitterType === 'anonymous' ? 'Anonymous contributor' : 'Public contributor',
+          },
+          about: [job.industry, job.workMode, job.seniority],
+        })}
+      />
+
       <section class="page-hero detail-hero">
         <p class="hero-kicker">
           <strong>{job.industry}</strong>
@@ -95,6 +120,10 @@ if (!job) {
               <div>
                 <dt>Contributor type</dt>
                 <dd>{job.submitterType}</dd>
+              </div>
+              <div>
+                <dt>Last reviewed</dt>
+                <dd>{lastReviewedLabel}</dd>
               </div>
             </dl>
           </article>
