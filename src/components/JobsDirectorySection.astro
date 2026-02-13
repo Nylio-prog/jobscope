@@ -74,7 +74,10 @@ const facets = getDirectoryFacets(allJobs);
   </div>
 </form>
 
-<p class="result-count">{filteredJobs.length} jobs found</p>
+<div class="results-head">
+  <p class="result-count">{filteredJobs.length} jobs found</p>
+  <p class="result-tip">Open any story to see practical details, tools, and student advice.</p>
+</div>
 <section class="job-grid">
   {filteredJobs.map((job) => <JobCard job={job} />)}
 </section>
@@ -111,12 +114,33 @@ const facets = getDirectoryFacets(allJobs);
   }
 
   .result-count {
+    margin: 0;
     color: var(--ink-soft);
+    font-weight: 700;
+  }
+
+  .results-head {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: space-between;
+    gap: 0.5rem;
+  }
+
+  .result-tip {
+    margin: 0;
+    color: var(--ink-soft);
+    font-size: 0.92rem;
   }
 
   .job-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
     gap: 0.9rem;
+  }
+
+  @media (max-width: 720px) {
+    .job-grid {
+      grid-template-columns: 1fr;
+    }
   }
 </style>

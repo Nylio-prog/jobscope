@@ -6,48 +6,127 @@ type Props = {
 };
 
 const { job } = Astro.props;
+
+const accentPalette = [
+  { strong: '#0f4c81', soft: 'rgba(15, 76, 129, 0.14)' },
+  { strong: '#1f6b5a', soft: 'rgba(39, 130, 108, 0.16)' },
+  { strong: '#a45b21', soft: 'rgba(240, 139, 62, 0.2)' },
+  { strong: '#7b4e2b', soft: 'rgba(123, 78, 43, 0.2)' },
+] as const;
+
+const industryHash = [...job.industry].reduce((acc, char) => acc + char.charCodeAt(0), 0);
+const accent = accentPalette[industryHash % accentPalette.length];
 ---
 
-<article class="panel job-card">
-  <div class="job-meta">
-    <span>{job.industry}</span>
-    <span>{job.workMode}</span>
-    <span>{job.yearsExperience}y exp</span>
-  </div>
-  <h3><a href={`/jobs/${job.slug}`}>{job.roleTitle}</a></h3>
+<article
+  class="panel job-card"
+  style={`--job-accent:${accent.strong}; --job-accent-soft:${accent.soft};`}
+>
+  <header class="job-card-head">
+    <p class="pill industry-pill">{job.industry}</p>
+    <div class="mini-meta">
+      <p class="pill">{job.workMode}</p>
+      <p class="pill">{job.yearsExperience}y exp</p>
+      <p class="pill">{job.seniority}</p>
+    </div>
+  </header>
+
+  <h3>
+    <a href={`/jobs/${job.slug}`}>{job.roleTitle}</a>
+  </h3>
   <p class="job-location">{job.location}</p>
-  <p class="job-summary">{job.dayToDay}</p>
-  <p class="job-reco"><strong>Advice:</strong> {job.recommendationToStudents}</p>
+
+  <section class="preview-strip" aria-label="Story preview">
+    <div>
+      <p class="label">Day-to-day snapshot</p>
+      <p class="text-clamp">{job.dayToDay}</p>
+    </div>
+    <div>
+      <p class="label">Advice highlight</p>
+      <p class="text-clamp">{job.recommendationToStudents}</p>
+    </div>
+  </section>
+
+  <a class="job-read-link" href={`/jobs/${job.slug}`}
+    >Open full story <span aria-hidden="true">→</span></a
+  >
 </article>
 
 <style>
   .job-card {
     display: grid;
-    gap: 0.65rem;
+    gap: 0.72rem;
+    position: relative;
+    overflow: hidden;
+    transition:
+      transform 180ms ease,
+      box-shadow 180ms ease;
+    background:
+      linear-gradient(170deg, var(--job-accent-soft), rgba(255, 255, 255, 0) 55%), var(--bg-panel);
   }
 
-  .job-meta {
+  .job-card::before {
+    content: '';
+    position: absolute;
+    left: 0;
+    top: 0;
+    bottom: 0;
+    width: 5px;
+    background: var(--job-accent);
+  }
+
+  .job-card:hover,
+  .job-card:focus-within {
+    transform: translateY(-2px);
+    box-shadow: 0 18px 34px rgba(15, 42, 59, 0.17);
+  }
+
+  .job-card-head {
+    display: flex;
+    justify-content: space-between;
+    align-items: start;
+    gap: 0.6rem;
+  }
+
+  .mini-meta {
     display: flex;
     flex-wrap: wrap;
-    gap: 0.4rem;
-    font-size: 0.8rem;
+    gap: 0.35rem;
+    justify-content: end;
   }
 
-  .job-meta span {
-    padding: 0.16rem 0.45rem;
-    border: 1px solid var(--line);
+  .pill {
+    margin: 0;
+    padding: 0.16rem 0.52rem;
+    border: 1px solid rgba(15, 42, 59, 0.2);
     border-radius: 999px;
     background: #fff;
     color: var(--ink-soft);
+    font-size: 0.8rem;
+  }
+
+  .industry-pill {
+    color: var(--job-accent);
+    font-weight: 700;
+    border-color: var(--job-accent);
   }
 
   .job-card h3 {
     margin: 0;
-    font-size: 1.2rem;
+    font-size: 1.35rem;
+    line-height: 1.2;
+    letter-spacing: -0.015em;
   }
 
   .job-card h3 a {
     text-decoration: none;
+    text-decoration-color: rgba(15, 42, 59, 0.35);
+    text-underline-offset: 0.22em;
+  }
+
+  .job-card h3 a:hover,
+  .job-card h3 a:focus-visible {
+    text-decoration: underline;
   }
 
   .job-location {
@@ -56,10 +135,59 @@ const { job } = Astro.props;
     font-size: 0.95rem;
   }
 
-  .job-summary,
-  .job-reco {
+  .preview-strip {
+    display: grid;
+    gap: 0.7rem;
+    border-top: 1px solid rgba(15, 42, 59, 0.12);
+    padding-top: 0.7rem;
+  }
+
+  .label {
     margin: 0;
+    font-size: 0.78rem;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    font-weight: 700;
+    color: var(--job-accent);
+  }
+
+  .text-clamp {
+    margin: 0.2rem 0 0;
     color: var(--ink-soft);
-    font-size: 0.94rem;
+    overflow-wrap: anywhere;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+  }
+
+  .job-read-link {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+    width: fit-content;
+    text-decoration: none;
+    font-weight: 700;
+    color: var(--job-accent);
+    margin-top: 0.15rem;
+  }
+
+  .job-read-link span {
+    transition: transform 160ms ease;
+  }
+
+  .job-read-link:hover span,
+  .job-read-link:focus-visible span {
+    transform: translateX(2px);
+  }
+
+  @media (max-width: 560px) {
+    .job-card-head {
+      flex-direction: column;
+    }
+
+    .mini-meta {
+      justify-content: start;
+    }
   }
 </style>

@@ -16,14 +16,17 @@ if (!job) {
 {
   job ? (
     <>
-      <section class="page-hero">
-        <p>
+      <section class="page-hero detail-hero">
+        <p class="hero-kicker">
           <strong>{job.industry}</strong>
         </p>
         <h1>{job.roleTitle}</h1>
-        <p>
-          {job.location} · {job.workMode} · {job.seniority} · {job.yearsExperience} years experience
-        </p>
+        <div class="hero-meta" aria-label="Role metadata">
+          <p>{job.location}</p>
+          <p>{job.workMode}</p>
+          <p>{job.seniority}</p>
+          <p>{job.yearsExperience} years experience</p>
+        </div>
         <div class="cta-row">
           <a class="btn btn-secondary" href="/jobs">
             Back to directory
@@ -34,45 +37,61 @@ if (!job) {
         </div>
       </section>
 
-      <section class="detail-grid">
-        <article class="panel">
-          <h2>Day to day</h2>
-          <p>{job.dayToDay}</p>
-        </article>
-        <article class="panel">
-          <h2>Best parts</h2>
-          <p>{job.bestParts}</p>
-        </article>
-        <article class="panel">
-          <h2>Hardest parts</h2>
-          <p>{job.hardestParts}</p>
-        </article>
-        <article class="panel">
-          <h2>Advice for students</h2>
-          <p>{job.recommendationToStudents}</p>
-        </article>
-        <article class="panel">
-          <h2>Practical details</h2>
-          <ul>
-            <li>
-              <strong>Salary range:</strong> {job.salaryRange ?? 'Not provided'}
-            </li>
-            <li>
-              <strong>Education path:</strong> {job.educationPath ?? 'Not provided'}
-            </li>
-            <li>
-              <strong>Contributor type:</strong> {job.submitterType}
-            </li>
-          </ul>
-        </article>
-        <article class="panel">
-          <h2>Tools used</h2>
-          <ul>
-            {job.toolsUsed.map((tool) => (
-              <li>{tool}</li>
-            ))}
-          </ul>
-        </article>
+      <section class="story-layout">
+        <div class="story-column">
+          <article class="panel story-block">
+            <p class="section-label">Work reality</p>
+            <h2>Day to day</h2>
+            <p>{job.dayToDay}</p>
+          </article>
+
+          <article class="panel story-block">
+            <p class="section-label">What keeps people in this role</p>
+            <h2>Best parts</h2>
+            <p>{job.bestParts}</p>
+          </article>
+
+          <article class="panel story-block caution">
+            <p class="section-label">Hard parts to know upfront</p>
+            <h2>Hardest parts</h2>
+            <p>{job.hardestParts}</p>
+          </article>
+        </div>
+
+        <aside class="side-rail stack">
+          <article class="panel advice-card">
+            <p class="section-label">For students</p>
+            <h2>Advice that matters</h2>
+            <p>{job.recommendationToStudents}</p>
+          </article>
+
+          <article class="panel details-card">
+            <h2>Practical details</h2>
+            <dl>
+              <div>
+                <dt>Salary range</dt>
+                <dd>{job.salaryRange ?? 'Not provided'}</dd>
+              </div>
+              <div>
+                <dt>Education path</dt>
+                <dd>{job.educationPath ?? 'Not provided'}</dd>
+              </div>
+              <div>
+                <dt>Contributor type</dt>
+                <dd>{job.submitterType}</dd>
+              </div>
+            </dl>
+          </article>
+
+          <article class="panel tools-card">
+            <h2>Tools used</h2>
+            <ul>
+              {job.toolsUsed.map((tool) => (
+                <li>{tool}</li>
+              ))}
+            </ul>
+          </article>
+        </aside>
       </section>
     </>
   ) : (
@@ -90,18 +109,164 @@ if (!job) {
 }
 
 <style>
-  .detail-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
-    gap: 0.9rem;
+  .detail-hero {
+    position: relative;
+    overflow: hidden;
   }
 
-  .detail-grid h2 {
-    margin-top: 0;
+  .detail-hero::after {
+    content: '';
+    position: absolute;
+    width: 360px;
+    height: 360px;
+    border-radius: 999px;
+    right: -140px;
+    top: -190px;
+    background: radial-gradient(circle, rgba(15, 76, 129, 0.22), rgba(15, 76, 129, 0));
+    pointer-events: none;
   }
 
-  .detail-grid p,
-  .detail-grid li {
+  .hero-kicker {
+    margin-bottom: 0.35rem;
+  }
+
+  .hero-meta {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.45rem;
+    margin: 0.7rem 0;
+  }
+
+  .hero-meta p {
+    margin: 0;
+    padding: 0.2rem 0.56rem;
+    border-radius: 999px;
+    border: 1px solid var(--line);
+    background: rgba(255, 255, 255, 0.86);
     color: var(--ink-soft);
+  }
+
+  .story-layout {
+    display: grid;
+    gap: 0.95rem;
+    grid-template-columns: 1.2fr 0.8fr;
+    align-items: start;
+  }
+
+  .story-column {
+    display: grid;
+    gap: 0.8rem;
+  }
+
+  .story-block {
+    position: relative;
+    padding-left: 1.3rem;
+    border-left: 4px solid var(--brand-primary);
+  }
+
+  .story-block::before {
+    content: '';
+    position: absolute;
+    width: 0.72rem;
+    height: 0.72rem;
+    left: -0.52rem;
+    top: 1.3rem;
+    border-radius: 999px;
+    background: var(--brand-primary);
+    box-shadow: 0 0 0 4px rgba(15, 76, 129, 0.14);
+  }
+
+  .story-block.caution {
+    border-left-color: var(--brand-secondary);
+  }
+
+  .story-block.caution::before {
+    background: var(--brand-secondary);
+    box-shadow: 0 0 0 4px rgba(240, 139, 62, 0.18);
+  }
+
+  .section-label {
+    margin: 0;
+    font-size: 0.78rem;
+    text-transform: uppercase;
+    letter-spacing: 0.07em;
+    color: var(--ink-soft);
+    font-weight: 700;
+  }
+
+  .story-block h2,
+  .advice-card h2,
+  .details-card h2,
+  .tools-card h2 {
+    margin: 0.2rem 0 0;
+    line-height: 1.15;
+  }
+
+  .story-block p,
+  .advice-card p,
+  .details-card dd,
+  .tools-card li {
+    color: var(--ink-soft);
+    overflow-wrap: anywhere;
+  }
+
+  .advice-card {
+    background:
+      linear-gradient(155deg, rgba(39, 130, 108, 0.12), rgba(240, 139, 62, 0.13)), var(--bg-panel);
+  }
+
+  .details-card dl {
+    margin: 0.65rem 0 0;
+    display: grid;
+    gap: 0.6rem;
+  }
+
+  .details-card dt {
+    font-weight: 700;
+  }
+
+  .details-card dd {
+    margin: 0.15rem 0 0;
+  }
+
+  .tools-card ul {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.45rem;
+    list-style: none;
+    padding: 0;
+    margin: 0.7rem 0 0;
+  }
+
+  .tools-card li {
+    border: 1px solid var(--line);
+    border-radius: 999px;
+    padding: 0.22rem 0.52rem;
+    background: #fff;
+  }
+
+  @media (max-width: 940px) {
+    .story-layout {
+      grid-template-columns: 1fr;
+    }
+
+    .side-rail {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      display: grid;
+    }
+
+    .tools-card {
+      grid-column: 1 / -1;
+    }
+  }
+
+  @media (max-width: 680px) {
+    .side-rail {
+      grid-template-columns: 1fr;
+    }
+
+    .story-block {
+      padding-left: 1rem;
+    }
   }
 </style>
