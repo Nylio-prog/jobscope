@@ -7,282 +7,204 @@ import Layout from '../layouts/Layout.astro';
   description="How JobScope curates practical, experience-based career stories."
 >
   <section class="page-hero about-hero animate-rise">
-    <p><strong>Inside JobScope</strong></p>
-    <h1>Built like a field guide, not a brochure.</h1>
+    <p><strong>About JobScope</strong></p>
+    <h1>A practical guide to what jobs are really like.</h1>
     <p>
-      Most career resources explain titles. JobScope documents lived work reality: what people do,
-      where they struggle, what gets better with experience, and what students should know before
-      committing years to a path.
+      JobScope publishes structured, first-person stories so students and career switchers can compare
+      real day-to-day work before committing to a path.
     </p>
-  </section>
-
-  <section class="signal-strip" aria-label="JobScope signal strip">
-    <p><span>Signal 01</span> Real workflows over abstract job descriptions</p>
-    <p><span>Signal 02</span> Honest tradeoffs, not hype</p>
-    <p><span>Signal 03</span> Student-first recommendations</p>
-  </section>
-
-  <section class="origin-grid">
-    <div class="origin-story panel">
-      <p class="kicker">Why this exists</p>
-      <h2>Students are asked to choose early with incomplete information.</h2>
-      <p>
-        We kept seeing the same pattern: people select degrees, internships, or transitions based on
-        polished summaries, then discover the real day-to-day too late. JobScope exists to close
-        that gap with structured first-person reporting.
-      </p>
-      <blockquote>Better choices come from concrete stories, not generic career advice.</blockquote>
+    <div class="cta-row">
+      <a class="btn btn-primary" href="/jobs">Explore stories</a>
+      <a class="btn btn-secondary" href="/share">Share your experience</a>
     </div>
+  </section>
 
-    <aside class="review-panel panel" aria-label="Editorial review model">
-      <h2>Editorial review model</h2>
+  <section class="about-grid" aria-label="Mission and standards">
+    <article class="panel mission">
+      <h2>Why we built this</h2>
+      <p>
+        Most career pages describe titles and salary ranges, but leave out workflow, tradeoffs,
+        stress points, and growth patterns. We built JobScope to close that gap with concrete,
+        experience-based reporting.
+      </p>
+      <p>
+        The goal is simple: help people make less blind decisions by seeing how work actually feels
+        over time.
+      </p>
+    </article>
+
+    <aside class="standards" aria-label="Editorial standards">
+      <h2>Editorial standards</h2>
       <dl>
         <div>
-          <dt>What we publish</dt>
-          <dd>Detailed day-to-day tasks, clear tradeoffs, and practical advice to students.</dd>
+          <dt>Useful over polished</dt>
+          <dd>We prioritize specific workflows, tools, and responsibilities.</dd>
         </div>
         <div>
-          <dt>What we reject</dt>
-          <dd>Vague promotion, empty takes, or submissions without actionable detail.</dd>
+          <dt>Balanced perspective</dt>
+          <dd>Every story should include both rewards and difficult parts of the role.</dd>
         </div>
         <div>
-          <dt>Identity options</dt>
-          <dd>Contributors can submit publicly or anonymously. Both are clearly labeled.</dd>
+          <dt>Reader-first</dt>
+          <dd>Advice must be actionable for students and career switchers.</dd>
         </div>
       </dl>
     </aside>
   </section>
 
-  <section class="compass panel" aria-label="JobScope editorial compass">
-    <p class="kicker">Our compass</p>
-    <h2>Every approved story should answer four practical questions.</h2>
-    <div class="compass-grid">
+  <section class="principles" aria-label="What every story should answer">
+    <h2>What every approved story should answer</h2>
+    <div class="principles-grid">
       <article>
-        <h3>What does the week actually look like?</h3>
-        <p>Meetings, tools, deliverables, collaboration rhythm.</p>
+        <h3>What does a normal week look like?</h3>
+        <p>Deliverables, meetings, tools, and collaboration rhythm.</p>
       </article>
       <article>
-        <h3>What feels rewarding?</h3>
-        <p>Moments that make people stay in the role long-term.</p>
+        <h3>What makes this role rewarding?</h3>
+        <p>The moments and outcomes that keep people in the field.</p>
       </article>
       <article>
-        <h3>What is genuinely hard?</h3>
-        <p>Stress points, limitations, and difficult parts of the work.</p>
-      </article>
-      <article>
-        <h3>Who is this path a fit for?</h3>
-        <p>Specific advice for students and career switchers.</p>
+        <h3>What should readers watch out for?</h3>
+        <p>Hard parts, tradeoffs, and who may not be a strong fit.</p>
       </article>
     </div>
   </section>
 
-  <section class="lifecycle" aria-label="Submission lifecycle">
-    <p class="kicker">How stories move through JobScope</p>
+  <section class="process" aria-label="How stories are published">
+    <h2>How a story gets published</h2>
     <ol>
       <li>
-        <strong>Submit:</strong> contributors complete a structured form with required practical fields.
+        <span>01</span>
+        <p>Contributor submits a structured story.</p>
       </li>
       <li>
-        <strong>Moderate:</strong> staff reviews quality, tone, and trust criteria before approval.
+        <span>02</span>
+        <p>Staff checks quality, clarity, and trust signals.</p>
       </li>
       <li>
-        <strong>Publish:</strong> approved stories appear in Wall of Paths and the Jobs directory.
-      </li>
-      <li>
-        <strong>Guide:</strong> readers use stories to compare paths before making decisions.
+        <span>03</span>
+        <p>Approved stories appear in Wall of Paths and Jobs.</p>
       </li>
     </ol>
-  </section>
-
-  <section class="promise panel">
-    <h2>Our promise</h2>
-    <p>
-      We are not trying to rank jobs. We are trying to make choices less blind. If a story helps one
-      student avoid a poor-fit path or discover a better one, it has done its job.
-    </p>
-    <div class="cta-row">
-      <a class="btn btn-primary" href="/jobs">Explore stories</a>
-      <a class="btn btn-secondary" href="/share">Contribute yours</a>
-    </div>
   </section>
 </Layout>
 
 <style>
   .about-hero {
-    position: relative;
-    overflow: hidden;
+    max-width: 78ch;
   }
 
-  .about-hero::after {
-    content: '';
-    position: absolute;
-    inset: auto -12% -32% auto;
-    width: 300px;
-    height: 300px;
-    border-radius: 999px;
-    background: radial-gradient(circle, rgba(39, 130, 108, 0.18), rgba(39, 130, 108, 0));
-    pointer-events: none;
-  }
-
-  .signal-strip {
+  .about-grid {
     display: grid;
-    gap: 0.6rem;
-    margin: 0.6rem 0 1.2rem;
-  }
-
-  .signal-strip p {
-    margin: 0;
-    padding: 0.55rem 0.8rem;
-    border: 1px solid var(--line);
-    border-radius: 999px;
-    background: rgba(255, 255, 255, 0.66);
-    color: var(--ink-soft);
-  }
-
-  .signal-strip span {
-    display: inline-flex;
-    margin-right: 0.45rem;
-    padding: 0.08rem 0.35rem;
-    border-radius: 999px;
-    background: rgba(15, 76, 129, 0.12);
-    color: var(--ink-strong);
-    font-weight: 700;
-    font-size: 0.82rem;
-  }
-
-  .origin-grid {
-    display: grid;
-    grid-template-columns: 1.6fr 1fr;
-    gap: 0.9rem;
+    grid-template-columns: minmax(0, 1.6fr) minmax(0, 1fr);
+    gap: 1.1rem;
     align-items: start;
   }
 
-  .kicker {
-    text-transform: uppercase;
-    letter-spacing: 0.08em;
-    font-size: 0.78rem;
-    font-weight: 700;
-    color: var(--ink-soft);
-  }
-
-  .origin-story h2,
-  .compass h2,
-  .promise h2,
-  .review-panel h2 {
+  .mission h2,
+  .standards h2,
+  .principles h2,
+  .process h2 {
     margin: 0;
-    line-height: 1.15;
+    line-height: 1.12;
   }
 
-  .origin-story blockquote {
-    margin: 0.9rem 0 0;
-    padding: 0.7rem 0.85rem;
-    border-left: 4px solid var(--brand-secondary);
-    background: rgba(240, 139, 62, 0.08);
-    border-radius: 10px;
-    font-size: 1.05rem;
+  .standards {
+    padding: 0.8rem 0;
   }
 
-  .review-panel dl {
-    margin: 0;
+  .standards dl {
+    margin: 1rem 0 0;
     display: grid;
-    gap: 0.65rem;
+    gap: 0.95rem;
   }
 
-  .review-panel dt {
+  .standards dt {
     font-weight: 700;
+    margin-bottom: 0.2rem;
   }
 
-  .review-panel dd {
-    margin: 0.18rem 0 0;
+  .standards dd {
+    margin: 0;
     color: var(--ink-soft);
   }
 
-  .compass {
-    margin-top: 0.9rem;
+  .principles {
+    margin-top: 1.2rem;
+    padding-top: 1.1rem;
+    border-top: 1px solid var(--line);
   }
 
-  .compass-grid {
+  .principles-grid {
+    margin-top: 0.8rem;
+    display: grid;
+    gap: 0.9rem;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+
+  .principles-grid article {
+    border: 1px solid var(--line);
+    border-radius: 12px;
+    background: rgba(255, 255, 255, 0.72);
+    padding: 0.85rem;
+  }
+
+  .principles-grid h3 {
+    margin: 0;
+    font-size: 1.02rem;
+  }
+
+  .principles-grid p {
+    margin: 0.45rem 0 0;
+    color: var(--ink-soft);
+  }
+
+  .process {
+    margin-top: 1.35rem;
+    padding: 1.1rem;
+    border: 1px solid rgba(15, 42, 59, 0.14);
+    border-radius: 12px;
+    background: var(--bg-panel);
+    box-shadow: var(--surface-shadow);
+  }
+
+  .process ol {
+    margin: 0.95rem 0 0;
+    padding: 0;
+    list-style: none;
     display: grid;
     gap: 0.75rem;
-    grid-template-columns: repeat(2, minmax(0, 1fr));
+    grid-template-columns: repeat(3, minmax(0, 1fr));
   }
 
-  .compass-grid article {
-    border: 1px dashed rgba(15, 42, 59, 0.32);
-    border-radius: 12px;
-    padding: 0.7rem;
+  .process li {
+    padding: 0.8rem;
+    border: 1px solid var(--line);
+    border-radius: 10px;
     background: #fff;
   }
 
-  .compass-grid h3 {
-    margin: 0;
-    font-size: 1rem;
+  .process span {
+    display: inline-flex;
+    font-size: 0.78rem;
+    letter-spacing: 0.08em;
+    font-weight: 700;
+    color: var(--brand-primary);
   }
 
-  .compass-grid p {
+  .process p {
     margin: 0.4rem 0 0;
     color: var(--ink-soft);
   }
 
-  .lifecycle {
-    margin-top: 1rem;
-  }
-
-  .lifecycle ol {
-    list-style: none;
-    margin: 0.55rem 0 0;
-    padding: 0;
-    display: grid;
-    gap: 0.65rem;
-    counter-reset: lifecycle;
-  }
-
-  .lifecycle li {
-    counter-increment: lifecycle;
-    padding: 0.65rem 0.8rem 0.65rem 2.6rem;
-    border: 1px solid var(--line);
-    border-radius: 12px;
-    background: rgba(255, 255, 255, 0.72);
-    color: var(--ink-soft);
-    position: relative;
-  }
-
-  .lifecycle li::before {
-    content: counter(lifecycle);
-    position: absolute;
-    left: 0.75rem;
-    top: 0.58rem;
-    width: 1.32rem;
-    height: 1.32rem;
-    border-radius: 999px;
-    font-size: 0.82rem;
-    font-weight: 700;
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    background: linear-gradient(140deg, var(--brand-primary), #0b6ab3);
-    color: #f4fbff;
-  }
-
-  .promise {
-    margin-top: 1rem;
-    background:
-      linear-gradient(140deg, rgba(15, 76, 129, 0.11), rgba(39, 130, 108, 0.12)), var(--bg-panel);
-  }
-
   @media (max-width: 920px) {
-    .origin-grid {
-      grid-template-columns: 1fr;
-    }
-  }
-
-  @media (max-width: 620px) {
-    .compass-grid {
+    .about-grid {
       grid-template-columns: 1fr;
     }
 
-    .signal-strip p {
-      border-radius: 14px;
+    .principles-grid,
+    .process ol {
+      grid-template-columns: 1fr;
     }
   }
 </style>
