@@ -19,3 +19,53 @@ const jobs = (await listApprovedJobProfiles()).slice(0, 12);
     ))
   }
 </section>
+
+<style>
+  .wall-grid {
+    column-count: 3;
+    column-gap: 0.8rem;
+  }
+
+  .tile {
+    display: inline-grid;
+    width: 100%;
+    margin-bottom: 0.8rem;
+    text-decoration: none;
+    gap: 0.4rem;
+    break-inside: avoid;
+    background:
+      linear-gradient(150deg, rgba(39, 130, 108, 0.11), rgba(240, 139, 62, 0.12)), var(--bg-panel);
+  }
+
+  .tile h2 {
+    margin: 0;
+    font-size: 1.1rem;
+  }
+
+  .tile p {
+    margin: 0;
+    color: var(--ink-soft);
+  }
+
+  .tile-label {
+    display: inline-flex;
+    width: fit-content;
+    padding: 0.16rem 0.5rem;
+    border-radius: 999px;
+    background: #fff;
+    border: 1px solid var(--line);
+    font-size: 0.79rem;
+  }
+
+  @media (max-width: 900px) {
+    .wall-grid {
+      column-count: 2;
+    }
+  }
+
+  @media (max-width: 580px) {
+    .wall-grid {
+      column-count: 1;
+    }
+  }
+</style>
