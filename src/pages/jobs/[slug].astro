@@ -1,92 +1,37 @@
 ---
+import JobDetailSection from '../../components/JobDetailSection.astro';
 import Layout from '../../layouts/Layout.astro';
-import { getApprovedJobProfileBySlug } from '../../lib/job-profiles-repository';
 
 const slug = Astro.params.slug ?? '';
-const job = await getApprovedJobProfileBySlug(slug);
-
-if (!job) {
-  Astro.response.status = 404;
-}
 ---
 
-{
-  job ? (
-    <Layout title={job.roleTitle} description={job.dayToDay}>
-      <section class="page-hero">
-        <p>
-          <strong>{job.industry}</strong>
-        </p>
-        <h1>{job.roleTitle}</h1>
-        <p>
-          {job.location} · {job.workMode} · {job.seniority} · {job.yearsExperience} years experience
-        </p>
+<Layout title="Job Details" description="Explore a real job experience.">
+  <JobDetailSection slug={slug} server:defer>
+    <div slot="fallback" class="stack" aria-live="polite" aria-busy="true">
+      <section class="page-hero skeleton-hero">
+        <div class="skeleton-pill"></div>
+        <div class="skeleton-title"></div>
+        <div class="skeleton-line"></div>
         <div class="cta-row">
-          <a class="btn btn-secondary" href="/jobs">
-            Back to directory
-          </a>
-          <a class="btn btn-primary" href="/share">
-            Share your experience
-          </a>
+          <div class="skeleton-button"></div>
+          <div class="skeleton-button"></div>
         </div>
       </section>
 
       <section class="detail-grid">
-        <article class="panel">
-          <h2>Day to day</h2>
-          <p>{job.dayToDay}</p>
-        </article>
-        <article class="panel">
-          <h2>Best parts</h2>
-          <p>{job.bestParts}</p>
-        </article>
-        <article class="panel">
-          <h2>Hardest parts</h2>
-          <p>{job.hardestParts}</p>
-        </article>
-        <article class="panel">
-          <h2>Advice for students</h2>
-          <p>{job.recommendationToStudents}</p>
-        </article>
-        <article class="panel">
-          <h2>Practical details</h2>
-          <ul>
-            <li>
-              <strong>Salary range:</strong> {job.salaryRange ?? 'Not provided'}
-            </li>
-            <li>
-              <strong>Education path:</strong> {job.educationPath ?? 'Not provided'}
-            </li>
-            <li>
-              <strong>Contributor type:</strong> {job.submitterType}
-            </li>
-          </ul>
-        </article>
-        <article class="panel">
-          <h2>Tools used</h2>
-          <ul>
-            {job.toolsUsed.map((tool) => (
-              <li>{tool}</li>
-            ))}
-          </ul>
-        </article>
+        {
+          Array.from({ length: 6 }).map(() => (
+            <article class="panel detail-skeleton">
+              <div class="skeleton-title small" />
+              <div class="skeleton-line" />
+              <div class="skeleton-line medium" />
+            </article>
+          ))
+        }
       </section>
-    </Layout>
-  ) : (
-    <Layout title="Job Not Found" description="The requested job profile was not found.">
-      <section class="page-hero">
-        <p>
-          <strong>404</strong>
-        </p>
-        <h1>Job profile not found.</h1>
-        <p>The link may be outdated or the profile may have been removed.</p>
-        <a class="btn btn-secondary" href="/jobs">
-          Back to jobs
-        </a>
-      </section>
-    </Layout>
-  )
-}
+    </div>
+  </JobDetailSection>
+</Layout>
 
 <style>
   .detail-grid {
@@ -95,12 +40,62 @@ if (!job) {
     gap: 0.9rem;
   }
 
-  .detail-grid h2 {
-    margin-top: 0;
+  .skeleton-hero,
+  .detail-skeleton {
+    pointer-events: none;
   }
 
-  .detail-grid p,
-  .detail-grid li {
-    color: var(--ink-soft);
+  .skeleton-pill,
+  .skeleton-title,
+  .skeleton-line,
+  .skeleton-button {
+    border-radius: 999px;
+    background: linear-gradient(90deg, #ece7db, #f7f3ea, #ece7db);
+    background-size: 180% 100%;
+    animation: shimmer 1.2s ease-in-out infinite;
+  }
+
+  .skeleton-pill {
+    width: 30%;
+    height: 1rem;
+  }
+
+  .skeleton-title {
+    width: 85%;
+    height: 1.35rem;
+    border-radius: 10px;
+  }
+
+  .skeleton-title.small {
+    width: 55%;
+    height: 1.2rem;
+  }
+
+  .skeleton-line {
+    width: 70%;
+    height: 1rem;
+  }
+
+  .skeleton-line.medium {
+    width: 88%;
+  }
+
+  .skeleton-button {
+    width: 160px;
+    height: 2.3rem;
+  }
+
+  .detail-skeleton {
+    display: grid;
+    gap: 0.55rem;
+  }
+
+  @keyframes shimmer {
+    0% {
+      background-position: 100% 0;
+    }
+    100% {
+      background-position: -100% 0;
+    }
   }
 </style>

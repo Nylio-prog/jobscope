@@ -68,9 +68,8 @@ import Layout from '../../layouts/Layout.astro';
     throw new Error('Moderation UI failed to initialize.');
   }
 
-  type PendingEntry = {
+  type PendingSubmission = {
     id: string;
-    slug: string;
     roleTitle: string;
     industry: string;
     seniority: string;
@@ -78,16 +77,16 @@ import Layout from '../../layouts/Layout.astro';
     workMode: string;
     yearsExperience: number;
     createdAt: string;
-    reviewNotes: string | null;
-    salaryRange: string | null;
-    educationPath: string | null;
+    reviewNotes?: string | null;
+    salaryRange?: string | null;
+    educationPath?: string | null;
+    submitterType: string;
+    contactEmail: string;
+    toolsUsed?: string[];
     dayToDay: string;
-    toolsUsed: string[];
     bestParts: string;
     hardestParts: string;
     recommendationToStudents: string;
-    submitterType: string;
-    contactEmail: string | null;
   };
 
   const toText = (value: unknown): string =>
@@ -102,7 +101,7 @@ import Layout from '../../layouts/Layout.astro';
     return p;
   };
 
-  const createSubmissionCard = (entry: PendingEntry): HTMLElement => {
+  const createSubmissionCard = (entry: PendingSubmission): HTMLElement => {
     const card = document.createElement('article');
     card.className = 'pending-card';
 
