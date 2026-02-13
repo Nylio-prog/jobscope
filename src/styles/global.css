@@ -1,12 +1,22 @@
 :root {
-  --bg-base: #f6f3ec;
-  --bg-panel: #fffdf8;
-  --ink-strong: #0f2a3b;
-  --ink-soft: #4a5f6c;
-  --brand-primary: #0f4c81;
-  --brand-secondary: #f08b3e;
-  --brand-accent: #27826c;
-  --line: #d8d2c4;
+  --color-bg: #f6f3ec;
+  --color-surface: #fffdf8;
+  --color-text-primary: #0f2a3b;
+  --color-text-secondary: #4a5f6c;
+  --color-accent-primary: #0f4c81;
+  --color-accent-secondary: #f08b3e;
+  --color-accent-tertiary: #27826c;
+  --color-border: #d8d2c4;
+  --color-focus-ring: #0f4c81;
+
+  --bg-base: var(--color-bg);
+  --bg-panel: var(--color-surface);
+  --ink-strong: var(--color-text-primary);
+  --ink-soft: var(--color-text-secondary);
+  --brand-primary: var(--color-accent-primary);
+  --brand-secondary: var(--color-accent-secondary);
+  --brand-accent: var(--color-accent-tertiary);
+  --line: var(--color-border);
   --surface-shadow: 0 14px 30px rgba(15, 42, 59, 0.12);
   --radius-card: 20px;
   --space-xs: 0.4rem;
@@ -15,6 +25,18 @@
   --space-lg: 1.5rem;
   --space-xl: 2.5rem;
   --max-width: 1120px;
+}
+
+html[data-theme='coastal'] {
+  --color-bg: #eef4f8;
+  --color-surface: #fcfeff;
+  --color-text-primary: #113243;
+  --color-text-secondary: #486171;
+  --color-accent-primary: #0d5f8f;
+  --color-accent-secondary: #d46f31;
+  --color-accent-tertiary: #1e836f;
+  --color-border: #c8d6df;
+  --color-focus-ring: #0d5f8f;
 }
 
 *,
@@ -43,14 +65,24 @@ html {
 body {
   font-family: 'Space Grotesk', 'Manrope', 'Avenir Next', 'Segoe UI', sans-serif;
   background:
-    radial-gradient(circle at 0% 10%, rgba(15, 76, 129, 0.16), transparent 45%),
-    radial-gradient(circle at 100% 0%, rgba(240, 139, 62, 0.16), transparent 40%), var(--bg-base);
+    radial-gradient(circle at 0% 10%, color-mix(in srgb, var(--brand-primary) 16%, transparent), transparent 45%),
+    radial-gradient(
+      circle at 100% 0%,
+      color-mix(in srgb, var(--brand-secondary) 16%, transparent),
+      transparent 40%
+    ),
+    var(--bg-base);
   color: var(--ink-strong);
   line-height: 1.45;
 }
 
 a {
   color: inherit;
+}
+
+:where(a, button, input, select, textarea, [role='button']):focus-visible {
+  outline: 2px solid var(--color-focus-ring);
+  outline-offset: 2px;
 }
 
 .site-shell {
@@ -84,6 +116,12 @@ a {
   border-bottom: 1px solid var(--line);
 }
 
+.header-actions {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+}
+
 .brand {
   text-decoration: none;
   display: inline-flex;
@@ -108,6 +146,26 @@ a {
   display: flex;
   flex-wrap: wrap;
   gap: 0.35rem;
+}
+
+.theme-toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  background: #fff;
+  color: var(--ink-soft);
+  padding: 0.35rem 0.65rem;
+  font: inherit;
+  cursor: pointer;
+}
+
+.theme-toggle-dot {
+  width: 0.72rem;
+  height: 0.72rem;
+  border-radius: 99px;
+  background: linear-gradient(140deg, var(--brand-primary), var(--brand-secondary));
 }
 
 .site-nav a {
@@ -169,6 +227,14 @@ a {
   border-radius: 999px;
   text-decoration: none;
   font-weight: 700;
+  transition:
+    transform 140ms ease,
+    box-shadow 140ms ease;
+}
+
+.btn:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 10px 20px rgba(15, 42, 59, 0.12);
 }
 
 .btn-primary {

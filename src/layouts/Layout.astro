@@ -21,6 +21,19 @@ const { title, description = 'See what jobs are actually like.', noIndex = false
     <meta name="description" content={description} />
     {noIndex && <meta name="robots" content="noindex,nofollow" />}
     <title>{title} | JobScope</title>
+    <script is:inline>
+      (() => {
+        const storageKey = 'jobscope_theme';
+        try {
+          const storedTheme = localStorage.getItem(storageKey);
+          if (storedTheme === 'coastal') {
+            document.documentElement.dataset.theme = 'coastal';
+          }
+        } catch {
+          // Ignore storage errors; default theme remains active.
+        }
+      })();
+    </script>
   </head>
   <body>
     <a class="skip-link" href="#main">Skip to main content</a>
@@ -33,6 +46,39 @@ const { title, description = 'See what jobs are actually like.', noIndex = false
     </div>
     <script is:inline>
       (() => {
+        const themeStorageKey = 'jobscope_theme';
+        const root = document.documentElement;
+        const toggle = document.querySelector('[data-theme-toggle]');
+        const label = document.querySelector('[data-theme-toggle-label]');
+
+        const setTheme = (theme) => {
+          if (theme === 'coastal') {
+            root.dataset.theme = 'coastal';
+          } else {
+            delete root.dataset.theme;
+          }
+
+          if (label) {
+            label.textContent = `Theme: ${theme === 'coastal' ? 'Coastal' : 'Sand'}`;
+          }
+
+          try {
+            localStorage.setItem(themeStorageKey, theme);
+          } catch {
+            // Ignore storage errors.
+          }
+        };
+
+        const initialTheme = root.dataset.theme === 'coastal' ? 'coastal' : 'sand';
+        setTheme(initialTheme);
+
+        if (toggle instanceof HTMLButtonElement) {
+          toggle.addEventListener('click', () => {
+            const nextTheme = root.dataset.theme === 'coastal' ? 'sand' : 'coastal';
+            setTheme(nextTheme);
+          });
+        }
+
         const path = window.location.pathname;
         const eventName =
           path === '/'
