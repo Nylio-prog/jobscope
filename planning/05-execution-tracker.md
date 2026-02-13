@@ -48,10 +48,10 @@ Last updated: 2026-02-13
 - `DONE` Run full test campaign and capture results.
 
 ## Phase 7 - Build and Delivery
-- `IN_PROGRESS` Production build verification (blocked by local EPERM during Vercel adapter file copy).
+- `DONE` Production build verification (passes on Linux filesystem; `/mnt/c/...` mount triggers local EPERM during Vercel copy step).
 - `DONE` Final docs: setup, env vars, deploy, moderation workflow.
 - `DONE` Final pass for accessibility and reduced-motion handling.
-- `IN_PROGRESS` Prepare handoff summary and next steps.
+- `DONE` Prepare handoff summary and next steps.
 
 ## Mandatory Test Campaign Definition
 1. `npm run test`: all unit/integration tests must pass.

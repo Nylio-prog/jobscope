@@ -45,3 +45,4 @@ npm run build
 
 - Submissions are accepted without login and always marked `pending` for manual moderation.
 - Seed data includes 20 approved job profiles for demo and testing.
+- If building from a Windows-mounted path (for example `/mnt/c/...` in WSL), Vercel adapter copy steps may hit `EPERM`; build from a native Linux path (for example `/tmp/...`) to validate packaging.
