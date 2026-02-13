@@ -65,17 +65,18 @@ export const shareSubmissionSchema = jobProfileSchema
     toolsUsed: z
       .union([z.array(z.string().min(1).max(64)).max(20), z.string().max(300)])
       .transform((value) => {
-        if (Array.isArray(value)) {
-          return value.map((tool) => tool.trim()).filter(Boolean);
-        }
-
-        return value
-          .split(',')
+        const normalizedTools = (Array.isArray(value) ? value : value.split(','))
           .map((tool) => tool.trim())
           .filter(Boolean)
           .slice(0, 20);
+
+        return [...new Set(normalizedTools)];
+      })
+      .refine((tools) => tools.length > 0, {
+        message: 'Add at least one tool.',
       }),
     contactEmail: z.string().email().max(200).optional().or(z.literal('')),
+    website: z.string().max(0).optional().or(z.literal('')),
   });
 
 export type JobProfile = z.infer<typeof jobProfileSchema>;

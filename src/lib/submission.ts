@@ -35,10 +35,25 @@ export function assessSubmissionForModeration(submission: ShareSubmission): Mode
 }
 
 export function normalizeSubmission(payload: ShareSubmission): ShareSubmission {
+  const normalizeText = (value: string | undefined) =>
+    value
+      ?.trim()
+      .replace(/\s+/g, ' ');
+
   return {
     ...payload,
-    contactEmail: payload.contactEmail?.trim() || undefined,
-    educationPath: payload.educationPath?.trim() || undefined,
-    salaryRange: payload.salaryRange?.trim() || undefined,
+    roleTitle: normalizeText(payload.roleTitle) ?? payload.roleTitle,
+    location: normalizeText(payload.location) ?? payload.location,
+    dayToDay: normalizeText(payload.dayToDay) ?? payload.dayToDay,
+    bestParts: normalizeText(payload.bestParts) ?? payload.bestParts,
+    hardestParts: normalizeText(payload.hardestParts) ?? payload.hardestParts,
+    recommendationToStudents:
+      normalizeText(payload.recommendationToStudents) ?? payload.recommendationToStudents,
+    contactEmail: payload.contactEmail?.trim().toLowerCase() || undefined,
+    educationPath: normalizeText(payload.educationPath) || undefined,
+    salaryRange: normalizeText(payload.salaryRange) || undefined,
+    toolsUsed: [...new Set(payload.toolsUsed.map((tool) => normalizeText(tool) ?? tool))].filter(
+      Boolean,
+    ),
   };
 }

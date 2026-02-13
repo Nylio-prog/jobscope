@@ -14,6 +14,11 @@ import { INDUSTRIES, SENIORITY_LEVELS, SUBMITTER_TYPES, WORK_MODES } from '../li
   </section>
 
   <form class="panel share-form" id="share-form">
+    <label class="honeypot-field" aria-hidden="true" tabindex="-1">
+      Website
+      <input name="website" type="text" autocomplete="off" tabindex="-1" />
+    </label>
+
     <label>
       Role title *
       <input name="roleTitle" required />
@@ -120,6 +125,28 @@ import { INDUSTRIES, SENIORITY_LEVELS, SUBMITTER_TYPES, WORK_MODES } from '../li
     status instanceof HTMLParagraphElement &&
     errorSummary instanceof HTMLDivElement
   ) {
+    const sendEvent = (event: 'page_share_success', metadata?: Record<string, unknown>) => {
+      const payload = {
+        event,
+        path: window.location.pathname,
+        sessionId: window.sessionStorage.getItem('jobscope_session_id') ?? undefined,
+        metadata,
+      };
+
+      if (navigator.sendBeacon) {
+        const blob = new Blob([JSON.stringify(payload)], { type: 'application/json' });
+        navigator.sendBeacon('/api/events', blob);
+        return;
+      }
+
+      void fetch('/api/events', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload),
+        keepalive: true,
+      });
+    };
+
     const fieldLabels: Record<string, string> = {
       roleTitle: 'Role title',
       industry: 'Industry',
@@ -136,6 +163,7 @@ import { INDUSTRIES, SENIORITY_LEVELS, SUBMITTER_TYPES, WORK_MODES } from '../li
       recommendationToStudents: 'Recommendation to students',
       submitterType: 'Submitter type',
       contactEmail: 'Contact email',
+      website: 'Website',
     };
 
     const clearFieldErrors = () => {
@@ -233,6 +261,9 @@ import { INDUSTRIES, SENIORITY_LEVELS, SUBMITTER_TYPES, WORK_MODES } from '../li
         if (response.ok) {
           form.reset();
           status.textContent = data.message;
+          sendEvent('page_share_success', {
+            storage: data.storage ?? 'unknown',
+          });
           return;
         }
 
@@ -266,6 +297,14 @@ import { INDUSTRIES, SENIORITY_LEVELS, SUBMITTER_TYPES, WORK_MODES } from '../li
     gap: 0.35rem;
     font-weight: 700;
     color: var(--ink-soft);
+  }
+
+  .honeypot-field {
+    position: absolute;
+    left: -9999px;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
   }
 
   .share-form input,

@@ -76,4 +76,13 @@ describe('submission utilities', () => {
       expect(parsed.data.yearsExperience).toBe(3);
     }
   });
+
+  it('rejects empty tools list after normalization', () => {
+    const parsed = validateShareSubmission({
+      ...basePayload,
+      toolsUsed: ',,,   ',
+    });
+
+    expect(parsed.success).toBe(false);
+  });
 });

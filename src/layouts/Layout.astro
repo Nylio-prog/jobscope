@@ -31,5 +31,51 @@ const { title, description = 'See what jobs are actually like.', noIndex = false
       </main>
       <SiteFooter />
     </div>
+    <script is:inline>
+      (() => {
+        const path = window.location.pathname;
+        const eventName =
+          path === '/'
+            ? 'page_home'
+            : path === '/jobs'
+              ? 'page_jobs'
+              : path.startsWith('/jobs/')
+                ? 'page_job_detail'
+                : path === '/share'
+                  ? 'page_share_start'
+                  : null;
+
+        if (!eventName) {
+          return;
+        }
+
+        const storageKey = 'jobscope_session_id';
+        const currentSessionId =
+          window.sessionStorage.getItem(storageKey) ??
+          `${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 8)}`;
+        window.sessionStorage.setItem(storageKey, currentSessionId);
+
+        const payload = JSON.stringify({
+          event: eventName,
+          path,
+          sessionId: currentSessionId,
+        });
+
+        if (navigator.sendBeacon) {
+          const blob = new Blob([payload], { type: 'application/json' });
+          navigator.sendBeacon('/api/events', blob);
+          return;
+        }
+
+        void fetch('/api/events', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: payload,
+          keepalive: true,
+        });
+      })();
+    </script>
   </body>
 </html>

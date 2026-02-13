@@ -1,8 +1,8 @@
-# JobScope v1
+# JobScope
 
 JobScope is a career-discovery website where students and early-career users can explore structured, real-world job stories.
 
-## Implemented v1 routes
+## Implemented routes
 
 - `/` Wall of Paths (primary homepage)
 - `/4` alias redirect to `/`
@@ -13,6 +13,7 @@ JobScope is a career-discovery website where students and early-career users can
 - `/moderation` compatibility redirect to `/staff/moderation`
 - `/api/share` submission endpoint (`pending` by default)
 - `/api/moderate` moderator approve/reject endpoint
+- `/api/events` privacy-safe funnel events endpoint
 - `/about`, `/guidelines`
 
 ## Stack
@@ -75,6 +76,39 @@ create table if not exists public.job_profiles (
   created_at timestamptz not null default now()
 );
 
+create table if not exists public.moderation_events (
+  id uuid primary key default gen_random_uuid(),
+  job_profile_id uuid not null references public.job_profiles(id) on delete cascade,
+  actor_user_id uuid not null references auth.users(id),
+  action text not null check (action in ('approve', 'reject')),
+  old_status public.profile_status not null,
+  new_status public.profile_status not null,
+  note text,
+  created_at timestamptz not null default now()
+);
+
+create table if not exists public.analytics_events (
+  id uuid primary key default gen_random_uuid(),
+  event_name text not null,
+  path text not null,
+  session_id text,
+  client_fingerprint text,
+  metadata jsonb,
+  created_at timestamptz not null default now()
+);
+
+create index if not exists idx_job_profiles_status_created_at
+on public.job_profiles(status, created_at desc);
+
+create index if not exists idx_job_profiles_slug
+on public.job_profiles(slug);
+
+create index if not exists idx_moderation_events_profile_created_at
+on public.moderation_events(job_profile_id, created_at desc);
+
+create index if not exists idx_analytics_events_event_created_at
+on public.analytics_events(event_name, created_at desc);
+
 alter table public.job_profiles enable row level security;
 
 drop policy if exists "read approved" on public.job_profiles;
@@ -99,6 +133,8 @@ with check (
    - `PUBLIC_SUPABASE_ANON_KEY`
    - `SUPABASE_SERVICE_ROLE_KEY` (server-only)
    - `MODERATOR_EMAILS` (comma-separated, e.g. `you@email.com`)
+   - Optional: `SHARE_RATE_LIMIT_MAX` (default `8`)
+   - Optional: `SHARE_RATE_LIMIT_WINDOW_MS` (default `600000`)
 
 4. Create moderator users in Supabase Auth using those emails.
 5. Open `/staff/moderation`, sign in via magic link, approve/reject pending submissions.
@@ -106,6 +142,8 @@ with check (
 ## Notes
 
 - Submissions are accepted without login and stored as `pending`.
+- `/api/share` uses honeypot + rate limiting + duplicate detection before enqueue.
+- Moderation supports filtered queue views, metrics, and bulk actions.
 - If Supabase env vars are missing, submission API falls back to local-dev mode (for tests/dev only).
 - Homepage and jobs directory use deferred server rendering with skeleton fallbacks while waiting for DB data.
 - Seed data includes 20 approved job profiles for demo and testing.

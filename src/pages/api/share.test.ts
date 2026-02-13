@@ -1,5 +1,6 @@
-import { describe, expect, it } from 'vitest';
+import { beforeEach, describe, expect, it } from 'vitest';
 
+import { clearRateLimitBucket } from '../../lib/rate-limit';
 import { POST } from './share';
 
 const validPayload = {
@@ -25,6 +26,10 @@ const validPayload = {
 };
 
 describe('POST /api/share', () => {
+  beforeEach(() => {
+    clearRateLimitBucket();
+  });
+
   it('accepts valid submission payloads', async () => {
     const response = await POST({
       request: new Request('http://localhost/api/share', {
@@ -55,5 +60,23 @@ describe('POST /api/share', () => {
     const body = await response.json();
     expect(body.ok).toBe(false);
     expect(body.errors).toBeDefined();
+  });
+
+  it('drops honeypot submissions without persisting', async () => {
+    const response = await POST({
+      request: new Request('http://localhost/api/share', {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({
+          ...validPayload,
+          website: 'https://spam.example',
+        }),
+      }),
+    } as any);
+
+    expect(response.status).toBe(202);
+    const body = await response.json();
+    expect(body.ok).toBe(true);
+    expect(body.submissionId).toBeUndefined();
   });
 });

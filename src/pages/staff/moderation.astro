@@ -33,6 +33,57 @@ import Layout from '../../layouts/Layout.astro';
     </div>
   </section>
 
+  <section class="panel stack hidden" id="queue-controls">
+    <h2>Queue controls</h2>
+    <form id="filters-form" class="filters-form">
+      <label>
+        Sort
+        <select id="filter-sort" name="sort">
+          <option value="newest">Newest first</option>
+          <option value="oldest">Oldest first</option>
+          <option value="flagged">Flagged first</option>
+        </select>
+      </label>
+      <label>
+        Industry
+        <select id="filter-industry" name="industry">
+          <option value="">All industries</option>
+        </select>
+      </label>
+      <label>
+        Submitter
+        <select id="filter-submitter" name="submitterType">
+          <option value="">All</option>
+          <option value="public">Public</option>
+          <option value="anonymous">Anonymous</option>
+        </select>
+      </label>
+      <div class="cta-row full">
+        <button class="btn btn-primary" type="submit">Apply filters</button>
+        <button id="clear-filters" class="btn btn-secondary" type="button">Clear</button>
+      </div>
+    </form>
+
+    <div id="queue-metrics" class="metrics-row"></div>
+
+    <div class="bulk-row">
+      <label>
+        Bulk review note (optional)
+        <textarea id="bulk-note" rows="2" placeholder="Shared review context for selected submissions"></textarea>
+      </label>
+      <div class="cta-row">
+        <button id="bulk-approve" class="btn btn-primary" type="button">Approve selected</button>
+        <button id="bulk-reject" class="btn btn-secondary" type="button">Reject selected</button>
+      </div>
+    </div>
+
+    <div class="pager-row">
+      <button id="page-prev" class="btn btn-secondary" type="button">Previous</button>
+      <p id="page-status">Page 1</p>
+      <button id="page-next" class="btn btn-secondary" type="button">Next</button>
+    </div>
+  </section>
+
   <section class="panel">
     <h2>Pending queue</h2>
     <p id="pending-summary">Sign in to load pending submissions.</p>
@@ -54,6 +105,19 @@ import Layout from '../../layouts/Layout.astro';
   const sessionActions = document.querySelector('#session-actions');
   const refreshPendingButton = document.querySelector('#refresh-pending');
   const signOutButton = document.querySelector('#sign-out');
+  const queueControls = document.querySelector('#queue-controls');
+  const filtersForm = document.querySelector('#filters-form');
+  const filterSort = document.querySelector('#filter-sort');
+  const filterIndustry = document.querySelector('#filter-industry');
+  const filterSubmitter = document.querySelector('#filter-submitter');
+  const clearFiltersButton = document.querySelector('#clear-filters');
+  const queueMetrics = document.querySelector('#queue-metrics');
+  const bulkNote = document.querySelector('#bulk-note');
+  const bulkApproveButton = document.querySelector('#bulk-approve');
+  const bulkRejectButton = document.querySelector('#bulk-reject');
+  const prevPageButton = document.querySelector('#page-prev');
+  const nextPageButton = document.querySelector('#page-next');
+  const pageStatus = document.querySelector('#page-status');
 
   if (
     !(authStatus instanceof HTMLElement) ||
@@ -63,7 +127,20 @@ import Layout from '../../layouts/Layout.astro';
     !(emailInput instanceof HTMLInputElement) ||
     !(sessionActions instanceof HTMLElement) ||
     !(refreshPendingButton instanceof HTMLButtonElement) ||
-    !(signOutButton instanceof HTMLButtonElement)
+    !(signOutButton instanceof HTMLButtonElement) ||
+    !(queueControls instanceof HTMLElement) ||
+    !(filtersForm instanceof HTMLFormElement) ||
+    !(filterSort instanceof HTMLSelectElement) ||
+    !(filterIndustry instanceof HTMLSelectElement) ||
+    !(filterSubmitter instanceof HTMLSelectElement) ||
+    !(clearFiltersButton instanceof HTMLButtonElement) ||
+    !(queueMetrics instanceof HTMLElement) ||
+    !(bulkNote instanceof HTMLTextAreaElement) ||
+    !(bulkApproveButton instanceof HTMLButtonElement) ||
+    !(bulkRejectButton instanceof HTMLButtonElement) ||
+    !(prevPageButton instanceof HTMLButtonElement) ||
+    !(nextPageButton instanceof HTMLButtonElement) ||
+    !(pageStatus instanceof HTMLElement)
   ) {
     throw new Error('Moderation UI failed to initialize.');
   }
@@ -87,10 +164,49 @@ import Layout from '../../layouts/Layout.astro';
     bestParts: string;
     hardestParts: string;
     recommendationToStudents: string;
+    hasFlags?: boolean;
+  };
+
+  type QueueMetrics = {
+    total: number;
+    flagged: number;
+    olderThan24h: number;
+    olderThan72h: number;
+  };
+
+  const state = {
+    sort: 'newest',
+    industry: '',
+    submitterType: '',
+    limit: 25,
+    offset: 0,
+    total: 0,
   };
 
   const toText = (value: unknown): string =>
     value === null || value === undefined || value === '' ? 'Not provided' : String(value);
+
+  const selectedIds = (): string[] =>
+    Array.from(
+      pendingList.querySelectorAll('input[type="checkbox"][data-id]:checked') as NodeListOf<HTMLInputElement>,
+    ).map((checkbox) => checkbox.dataset.id ?? '').filter(Boolean);
+
+  const updateIndustryOptions = (entries: PendingSubmission[]) => {
+    const current = filterIndustry.value;
+    const industries = [...new Set(entries.map((entry) => entry.industry).filter(Boolean))].sort((a, b) =>
+      a.localeCompare(b),
+    );
+
+    filterIndustry.innerHTML = '<option value="">All industries</option>';
+    for (const industry of industries) {
+      const option = document.createElement('option');
+      option.value = industry;
+      option.textContent = industry;
+      filterIndustry.appendChild(option);
+    }
+
+    filterIndustry.value = current;
+  };
 
   const createInfoParagraph = (label: string, value: unknown): HTMLParagraphElement => {
     const p = document.createElement('p');
@@ -101,9 +217,51 @@ import Layout from '../../layouts/Layout.astro';
     return p;
   };
 
+  const setActionButtonsDisabled = (disabled: boolean) => {
+    bulkApproveButton.disabled = disabled;
+    bulkRejectButton.disabled = disabled;
+  };
+
+  const buildFiltersQuery = (): string => {
+    const params = new URLSearchParams();
+    params.set('sort', state.sort);
+    params.set('limit', String(state.limit));
+    params.set('offset', String(state.offset));
+
+    if (state.industry) {
+      params.set('industry', state.industry);
+    }
+    if (state.submitterType) {
+      params.set('submitterType', state.submitterType);
+    }
+
+    return params.toString();
+  };
+
   const createSubmissionCard = (entry: PendingSubmission): HTMLElement => {
     const card = document.createElement('article');
     card.className = 'pending-card';
+
+    const head = document.createElement('div');
+    head.className = 'pending-head';
+
+    const pickLabel = document.createElement('label');
+    pickLabel.className = 'select-label';
+    const picker = document.createElement('input');
+    picker.type = 'checkbox';
+    picker.dataset.id = entry.id;
+    pickLabel.appendChild(picker);
+    pickLabel.appendChild(document.createTextNode(' Select'));
+    head.appendChild(pickLabel);
+
+    if (entry.hasFlags) {
+      const flag = document.createElement('span');
+      flag.className = 'risk-flag';
+      flag.textContent = 'Flagged';
+      head.appendChild(flag);
+    }
+
+    card.appendChild(head);
 
     const title = document.createElement('h3');
     title.textContent = entry.roleTitle;
@@ -169,15 +327,15 @@ import Layout from '../../layouts/Layout.astro';
   } else {
     const supabase = createClient(supabaseUrl, supabaseAnonKey);
     let activeToken = '';
-    let activeEmail = '';
 
     const setSignedOutState = () => {
       activeToken = '';
-      activeEmail = '';
       loginForm.classList.remove('hidden');
       sessionActions.classList.add('hidden');
+      queueControls.classList.add('hidden');
       pendingSummary.textContent = 'Sign in to load pending submissions.';
       pendingList.innerHTML = '';
+      queueMetrics.innerHTML = '';
       authStatus.textContent = '';
     };
 
@@ -188,7 +346,7 @@ import Layout from '../../layouts/Layout.astro';
 
       pendingSummary.textContent = 'Loading pending submissions...';
 
-      const response = await fetch('/api/moderate', {
+      const response = await fetch(`/api/moderate?${buildFiltersQuery()}`, {
         headers: {
           Authorization: `Bearer ${activeToken}`,
         },
@@ -200,11 +358,34 @@ import Layout from '../../layouts/Layout.astro';
         return;
       }
 
-      const pending = body.pending ?? [];
-      pendingSummary.textContent = pending.length
-        ? `${pending.length} pending submissions`
+      const pending = (body.pending ?? []) as PendingSubmission[];
+      state.total = Number(body.total ?? pending.length);
+      const metrics = (body.metrics ?? {
+        total: 0,
+        flagged: 0,
+        olderThan24h: 0,
+        olderThan72h: 0,
+      }) as QueueMetrics;
+
+      queueControls.classList.remove('hidden');
+      pendingSummary.textContent = state.total
+        ? `${state.total} pending submissions` + (pending.length < state.total ? ` (showing ${pending.length})` : '')
         : 'No pending submissions right now.';
+
+      queueMetrics.innerHTML =
+        `<p><strong>Total:</strong> ${metrics.total}</p>` +
+        `<p><strong>Flagged:</strong> ${metrics.flagged}</p>` +
+        `<p><strong>Older than 24h:</strong> ${metrics.olderThan24h}</p>` +
+        `<p><strong>Older than 72h:</strong> ${metrics.olderThan72h}</p>`;
+
+      const currentPage = Math.floor(state.offset / state.limit) + 1;
+      const pageCount = Math.max(1, Math.ceil(state.total / state.limit));
+      pageStatus.textContent = `Page ${currentPage} of ${pageCount}`;
+      prevPageButton.disabled = state.offset <= 0;
+      nextPageButton.disabled = state.offset + state.limit >= state.total;
+
       pendingList.innerHTML = '';
+      updateIndustryOptions(pending);
 
       for (const entry of pending) {
         pendingList.appendChild(createSubmissionCard(entry));
@@ -221,12 +402,85 @@ import Layout from '../../layouts/Layout.astro';
       }
 
       activeToken = session.access_token;
-      activeEmail = session.user.email ?? '';
-      authStatus.textContent = `Signed in as ${activeEmail}`;
+      authStatus.textContent = `Signed in as ${session.user.email ?? ''}`;
       loginForm.classList.add('hidden');
       sessionActions.classList.remove('hidden');
       await loadPending();
     };
+
+    const runModerationAction = async (
+      ids: string[],
+      status: 'approved' | 'rejected',
+      reviewNotes?: string,
+    ) => {
+      if (ids.length === 0) {
+        authStatus.textContent = 'Select at least one submission first.';
+        return;
+      }
+
+      setActionButtonsDisabled(true);
+      const response = await fetch('/api/moderate', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${activeToken}`,
+        },
+        body: JSON.stringify({
+          ids,
+          status,
+          reviewNotes: reviewNotes?.trim() || undefined,
+        }),
+      });
+
+      const body = await response.json();
+      setActionButtonsDisabled(false);
+
+      if (!response.ok || !body.ok) {
+        authStatus.textContent = body.message ?? 'Failed to update moderation status.';
+        return;
+      }
+
+      authStatus.textContent = `Updated ${body.results?.length ?? ids.length} submissions to ${status}.`;
+      await loadPending();
+    };
+
+    filtersForm.addEventListener('submit', async (event) => {
+      event.preventDefault();
+      state.sort = filterSort.value;
+      state.industry = filterIndustry.value;
+      state.submitterType = filterSubmitter.value;
+      state.offset = 0;
+      await loadPending();
+    });
+
+    clearFiltersButton.addEventListener('click', async () => {
+      state.sort = 'newest';
+      state.industry = '';
+      state.submitterType = '';
+      state.offset = 0;
+      filterSort.value = state.sort;
+      filterIndustry.value = state.industry;
+      filterSubmitter.value = state.submitterType;
+      await loadPending();
+    });
+
+    prevPageButton.addEventListener('click', async () => {
+      state.offset = Math.max(0, state.offset - state.limit);
+      await loadPending();
+    });
+
+    nextPageButton.addEventListener('click', async () => {
+      state.offset += state.limit;
+      await loadPending();
+    });
+
+    bulkApproveButton.addEventListener('click', async () => {
+      await runModerationAction(selectedIds(), 'approved', bulkNote.value);
+    });
+
+    bulkRejectButton.addEventListener('click', async () => {
+      await runModerationAction(selectedIds(), 'rejected', bulkNote.value);
+    });
 
     loginForm.addEventListener('submit', async (event) => {
       event.preventDefault();
@@ -275,28 +529,8 @@ import Layout from '../../layouts/Layout.astro';
       const reviewNotes = noteInput instanceof HTMLTextAreaElement ? noteInput.value.trim() : '';
 
       target.disabled = true;
-      const response = await fetch('/api/moderate', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${activeToken}`,
-        },
-        body: JSON.stringify({
-          id: submissionId,
-          status: action,
-          reviewNotes: reviewNotes || undefined,
-        }),
-      });
-
-      const body = await response.json();
-      if (!response.ok || !body.ok) {
-        authStatus.textContent = body.message ?? 'Failed to update moderation status.';
-        target.disabled = false;
-        return;
-      }
-
-      authStatus.textContent = `Submission ${submissionId} marked as ${action}.`;
-      await loadPending();
+      await runModerationAction([submissionId], action, reviewNotes || undefined);
+      target.disabled = false;
     });
 
     supabase.auth.onAuthStateChange(() => {
@@ -327,13 +561,66 @@ import Layout from '../../layouts/Layout.astro';
     min-width: min(400px, 100%);
   }
 
+  .filters-form {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+    gap: 0.7rem;
+  }
+
+  .filters-form label,
+  .bulk-row label {
+    display: grid;
+    gap: 0.35rem;
+    color: var(--ink-soft);
+    font-weight: 700;
+  }
+
+  .full {
+    grid-column: 1 / -1;
+  }
+
   .auth-form input,
-  .pending-card textarea {
+  .pending-card textarea,
+  .filters-form select,
+  .bulk-row textarea {
     font: inherit;
     border: 1px solid var(--line);
     background: #fff;
     border-radius: 10px;
     padding: 0.48rem 0.55rem;
+  }
+
+  .metrics-row {
+    display: grid;
+    gap: 0.55rem;
+    grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+    color: var(--ink-soft);
+  }
+
+  .metrics-row p {
+    margin: 0;
+    border: 1px solid var(--line);
+    border-radius: 10px;
+    background: #fff;
+    padding: 0.45rem 0.55rem;
+  }
+
+  .bulk-row {
+    display: grid;
+    gap: 0.5rem;
+  }
+
+  .pager-row {
+    display: flex;
+    gap: 0.6rem;
+    align-items: center;
+    flex-wrap: wrap;
+  }
+
+  .pager-row p {
+    margin: 0;
+    color: var(--ink-soft);
+    font-weight: 700;
   }
 
   .pending-list {
@@ -348,6 +635,32 @@ import Layout from '../../layouts/Layout.astro';
     background: #fff;
     display: grid;
     gap: 0.55rem;
+  }
+
+  .pending-head {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 0.6rem;
+  }
+
+  .select-label {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.3rem;
+    color: var(--ink-soft);
+    font-weight: 700;
+  }
+
+  .risk-flag {
+    display: inline-flex;
+    border: 1px solid #cf7f2e;
+    color: #8e4e14;
+    background: #fff4e7;
+    border-radius: 999px;
+    padding: 0.12rem 0.48rem;
+    font-size: 0.75rem;
+    font-weight: 700;
   }
 
   .pending-card h3,

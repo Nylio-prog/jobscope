@@ -8,8 +8,12 @@ import {
   isSupabaseAdminConfigured,
   isSupabaseConfigured,
 } from './supabase';
+import { logError, logWarn } from './telemetry';
 
 const JOB_PROFILES_TABLE = 'job_profiles';
+const MODERATION_EVENTS_TABLE = 'moderation_events';
+const PENDING_QUEUE_SCAN_LIMIT = 500;
+const DUPLICATE_SCAN_LIMIT = 80;
 
 const JOB_PROFILE_COLUMNS = [
   'id',
@@ -103,11 +107,149 @@ function mapDbRowToJobProfile(row: JobProfileRow): JobProfile {
   });
 }
 
+function normalizeForComparison(value: string): string[] {
+  return value
+    .toLowerCase()
+    .replace(/[^a-z0-9\s]/g, ' ')
+    .split(/\s+/)
+    .map((token) => token.trim())
+    .filter((token) => token.length >= 3);
+}
+
+function jaccardSimilarity(left: string, right: string): number {
+  const leftSet = new Set(normalizeForComparison(left));
+  const rightSet = new Set(normalizeForComparison(right));
+
+  if (leftSet.size === 0 || rightSet.size === 0) {
+    return 0;
+  }
+
+  let intersectionCount = 0;
+  for (const token of leftSet) {
+    if (rightSet.has(token)) {
+      intersectionCount += 1;
+    }
+  }
+
+  const unionCount = new Set([...leftSet, ...rightSet]).size;
+  return unionCount === 0 ? 0 : intersectionCount / unionCount;
+}
+
+function buildSubmissionText(submission: Pick<
+  ShareSubmission,
+  'dayToDay' | 'bestParts' | 'hardestParts' | 'recommendationToStudents'
+>): string {
+  return [
+    submission.dayToDay,
+    submission.bestParts,
+    submission.hardestParts,
+    submission.recommendationToStudents,
+  ].join(' ');
+}
+
 type CreateSubmissionResult = {
   id: string;
   slug: string;
   storage: 'supabase' | 'local-fallback';
 };
+
+export type DuplicateMatch = {
+  slug: string;
+  roleTitle: string;
+  status: JobProfile['status'];
+  similarity: number;
+};
+
+type DuplicateCandidateRow = {
+  slug: string;
+  role_title: string;
+  status: JobProfile['status'];
+  day_to_day: string;
+  best_parts: string;
+  hardest_parts: string;
+  recommendation_to_students: string;
+};
+
+function mapCandidateToDuplicateMatch(
+  submission: ShareSubmission,
+  candidate: DuplicateCandidateRow,
+): DuplicateMatch {
+  const submissionText = buildSubmissionText(submission);
+  const candidateText = [
+    candidate.day_to_day,
+    candidate.best_parts,
+    candidate.hardest_parts,
+    candidate.recommendation_to_students,
+  ].join(' ');
+
+  const roleTitleExactMatch =
+    candidate.role_title.trim().toLowerCase() === submission.roleTitle.trim().toLowerCase();
+  const similarity = jaccardSimilarity(submissionText, candidateText);
+
+  return {
+    slug: candidate.slug,
+    roleTitle: candidate.role_title,
+    status: candidate.status,
+    similarity: roleTitleExactMatch ? Math.max(similarity, 0.8) : similarity,
+  };
+}
+
+export async function findPotentialDuplicateSubmission(
+  submission: ShareSubmission,
+): Promise<DuplicateMatch | undefined> {
+  const localCandidates = getApprovedJobs()
+    .filter((job) => job.roleTitle.toLowerCase() === submission.roleTitle.toLowerCase())
+    .map(
+      (job): DuplicateCandidateRow => ({
+        slug: job.slug,
+        role_title: job.roleTitle,
+        status: job.status,
+        day_to_day: job.dayToDay,
+        best_parts: job.bestParts,
+        hardest_parts: job.hardestParts,
+        recommendation_to_students: job.recommendationToStudents,
+      }),
+    );
+
+  let dbCandidates: DuplicateCandidateRow[] = [];
+  if (isSupabaseConfigured()) {
+    const supabase = createSupabaseAnonClient();
+    const { data, error } = await supabase
+      .from(JOB_PROFILES_TABLE)
+      .select(
+        [
+          'slug',
+          'role_title',
+          'status',
+          'day_to_day',
+          'best_parts',
+          'hardest_parts',
+          'recommendation_to_students',
+        ].join(','),
+      )
+      .in('status', ['approved', 'pending'])
+      .ilike('role_title', submission.roleTitle)
+      .limit(DUPLICATE_SCAN_LIMIT);
+
+    if (error) {
+      logWarn('duplicate-detection-query-failed', {
+        message: error.message,
+      });
+    } else if (data) {
+      dbCandidates = data as unknown as DuplicateCandidateRow[];
+    }
+  }
+
+  const bestMatch = [...localCandidates, ...dbCandidates]
+    .map((candidate) => mapCandidateToDuplicateMatch(submission, candidate))
+    .sort((a, b) => b.similarity - a.similarity)[0];
+
+  if (!bestMatch || bestMatch.similarity < 0.72) {
+    return undefined;
+  }
+
+  return bestMatch;
+}
 
 export async function createPendingSubmission(
   submission: ShareSubmission,
@@ -265,6 +407,7 @@ export type PendingSubmissionPreview = {
   contactEmail: string | null;
   createdAt: string;
   reviewNotes: string | null;
+  hasFlags: boolean;
 };
 
 type PendingSubmissionRow = {
@@ -289,12 +432,101 @@ type PendingSubmissionRow = {
   review_notes: string | null;
 };
 
-export async function listPendingSubmissions(): Promise<PendingSubmissionPreview[]> {
+export type PendingListSort = 'newest' | 'oldest' | 'flagged';
+
+export type PendingListOptions = {
+  sort?: PendingListSort;
+  industry?: string;
+  submitterType?: string;
+  limit?: number;
+  offset?: number;
+};
+
+export type PendingSubmissionMetrics = {
+  total: number;
+  flagged: number;
+  olderThan24h: number;
+  olderThan72h: number;
+};
+
+export type PendingSubmissionsResult = {
+  items: PendingSubmissionPreview[];
+  total: number;
+  metrics: PendingSubmissionMetrics;
+};
+
+function hasRiskFlag(reviewNotes: string | null): boolean {
+  if (!reviewNotes) {
+    return false;
+  }
+
+  return /(flagged phrase|contains external link|possible duplicate)/i.test(reviewNotes);
+}
+
+function mapPendingRow(row: PendingSubmissionRow): PendingSubmissionPreview {
+  return {
+    id: row.id as string,
+    slug: row.slug as string,
+    roleTitle: row.role_title as string,
+    industry: row.industry as string,
+    seniority: row.seniority as string,
+    location: row.location as string,
+    workMode: row.work_mode as string,
+    salaryRange: (row.salary_range as string | null) ?? null,
+    educationPath: (row.education_path as string | null) ?? null,
+    dayToDay: row.day_to_day as string,
+    toolsUsed: (row.tools_used as string[] | null) ?? [],
+    bestParts: row.best_parts as string,
+    hardestParts: row.hardest_parts as string,
+    recommendationToStudents: row.recommendation_to_students as string,
+    yearsExperience: row.years_experience as number,
+    submitterType: row.submitter_type as string,
+    contactEmail: (row.contact_email as string | null) ?? null,
+    createdAt: normalizeDbTimestamp(row.created_at as string) ?? (row.created_at as string),
+    reviewNotes: (row.review_notes as string | null) ?? null,
+    hasFlags: hasRiskFlag((row.review_notes as string | null) ?? null),
+  };
+}
+
+function sortPending(
+  items: PendingSubmissionPreview[],
+  sort: PendingListSort,
+): PendingSubmissionPreview[] {
+  const copy = [...items];
+
+  switch (sort) {
+    case 'oldest':
+      return copy.sort(
+        (left, right) => new Date(left.createdAt).getTime() - new Date(right.createdAt).getTime(),
+      );
+    case 'flagged':
+      return copy.sort((left, right) => {
+        if (left.hasFlags !== right.hasFlags) {
+          return Number(right.hasFlags) - Number(left.hasFlags);
+        }
+
+        return new Date(left.createdAt).getTime() - new Date(right.createdAt).getTime();
+      });
+    case 'newest':
+    default:
+      return copy.sort(
+        (left, right) => new Date(right.createdAt).getTime() - new Date(left.createdAt).getTime(),
+      );
+  }
+}
+
+export async function listPendingSubmissions(
+  options: PendingListOptions = {},
+): Promise<PendingSubmissionsResult> {
   if (!isSupabaseAdminConfigured()) {
     throw new Error(
       'Supabase admin key is missing. Set SUPABASE_SERVICE_ROLE_KEY to list pending submissions.',
     );
   }
+
+  const sort = options.sort ?? 'newest';
+  const limit = Math.min(Math.max(options.limit ?? 50, 1), 200);
+  const offset = Math.max(options.offset ?? 0, 0);
 
   const supabase = createSupabaseAdminClient();
   const { data, error } = await supabase
@@ -323,36 +555,50 @@ export async function listPendingSubmissions(): Promise<PendingSubmissionPreview
       ].join(','),
     )
     .eq('status', 'pending')
-    .order('created_at', { ascending: false })
-    .limit(200);
+    .limit(PENDING_QUEUE_SCAN_LIMIT);
 
   if (error || !data) {
     throw new Error(error?.message ?? 'Failed to fetch pending submissions.');
   }
 
-  const rows = data as unknown as PendingSubmissionRow[];
+  const now = Date.now();
+  const allItems = (data as unknown as PendingSubmissionRow[]).map(mapPendingRow);
+  const filtered = allItems.filter((item) => {
+    const industryMatch = options.industry ? item.industry === options.industry : true;
+    const submitterMatch = options.submitterType ? item.submitterType === options.submitterType : true;
+    return industryMatch && submitterMatch;
+  });
+  const sorted = sortPending(filtered, sort);
+  const items = sorted.slice(offset, offset + limit);
 
-  return rows.map((row) => ({
-    id: row.id as string,
-    slug: row.slug as string,
-    roleTitle: row.role_title as string,
-    industry: row.industry as string,
-    seniority: row.seniority as string,
-    location: row.location as string,
-    workMode: row.work_mode as string,
-    salaryRange: (row.salary_range as string | null) ?? null,
-    educationPath: (row.education_path as string | null) ?? null,
-    dayToDay: row.day_to_day as string,
-    toolsUsed: (row.tools_used as string[] | null) ?? [],
-    bestParts: row.best_parts as string,
-    hardestParts: row.hardest_parts as string,
-    recommendationToStudents: row.recommendation_to_students as string,
-    yearsExperience: row.years_experience as number,
-    submitterType: row.submitter_type as string,
-    contactEmail: (row.contact_email as string | null) ?? null,
-    createdAt: normalizeDbTimestamp(row.created_at as string) ?? (row.created_at as string),
-    reviewNotes: (row.review_notes as string | null) ?? null,
-  }));
+  const metrics = filtered.reduce<PendingSubmissionMetrics>(
+    (acc, item) => {
+      const ageMs = now - new Date(item.createdAt).getTime();
+      acc.total += 1;
+      if (item.hasFlags) {
+        acc.flagged += 1;
+      }
+      if (ageMs >= 24 * 60 * 60 * 1000) {
+        acc.olderThan24h += 1;
+      }
+      if (ageMs >= 72 * 60 * 60 * 1000) {
+        acc.olderThan72h += 1;
+      }
+      return acc;
+    },
+    {
+      total: 0,
+      flagged: 0,
+      olderThan24h: 0,
+      olderThan72h: 0,
+    },
+  );
+
+  return {
+    items,
+    total: filtered.length,
+    metrics,
+  };
 }
 
 export async function updateSubmissionModeration(
@@ -360,7 +606,7 @@ export async function updateSubmissionModeration(
   status: ModerationStatus,
   moderatorUserId: string,
   reviewNotes?: string,
-): Promise<{ id: string; status: ModerationStatus }> {
+): Promise<{ id: string; status: ModerationStatus; auditLogged: boolean }> {
   if (!isSupabaseAdminConfigured()) {
     throw new Error(
       'Supabase admin key is missing. Set SUPABASE_SERVICE_ROLE_KEY to moderate submissions.',
@@ -368,6 +614,16 @@ export async function updateSubmissionModeration(
   }
 
   const supabase = createSupabaseAdminClient();
+  const { data: existing, error: readError } = await supabase
+    .from(JOB_PROFILES_TABLE)
+    .select('status')
+    .eq('id', id)
+    .single<{ status: JobProfile['status'] }>();
+
+  if (readError || !existing) {
+    throw new Error(readError?.message ?? 'Failed to load submission before moderation update.');
+  }
+
   const isApproved = status === 'approved';
   const updatePayload = {
     status,
@@ -387,5 +643,35 @@ export async function updateSubmissionModeration(
     throw new Error(error?.message ?? 'Failed to update submission moderation status.');
   }
 
-  return data;
+  let auditLogged = false;
+  const { error: auditError } = await supabase.from(MODERATION_EVENTS_TABLE).insert({
+    job_profile_id: id,
+    actor_user_id: moderatorUserId,
+    action: isApproved ? 'approve' : 'reject',
+    old_status: existing.status,
+    new_status: status,
+    note: reviewNotes?.trim() || null,
+    created_at: new Date().toISOString(),
+  });
+
+  if (auditError) {
+    const knownMissingTable =
+      auditError.code === '42P01' || auditError.message.toLowerCase().includes('does not exist');
+    if (knownMissingTable) {
+      logWarn('moderation-audit-table-missing', {
+        message: auditError.message,
+      });
+    } else {
+      logError('moderation-audit-write-failed', {
+        message: auditError.message,
+      });
+    }
+  } else {
+    auditLogged = true;
+  }
+
+  return {
+    ...data,
+    auditLogged,
+  };
 }
