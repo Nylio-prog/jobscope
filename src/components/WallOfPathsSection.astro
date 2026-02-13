@@ -1,0 +1,21 @@
+---
+import { listApprovedJobProfiles } from '../lib/job-profiles-repository';
+
+const jobs = (await listApprovedJobProfiles()).slice(0, 12);
+---
+
+<section class="wall-grid">
+  {
+    jobs.map((job, index) => (
+      <a
+        class="panel tile animate-rise"
+        style={`animation-delay:${index * 60}ms`}
+        href={`/jobs/${job.slug}`}
+      >
+        <p class="tile-label">{job.industry}</p>
+        <h2>{job.roleTitle}</h2>
+        <p>{job.location}</p>
+      </a>
+    ))
+  }
+</section>

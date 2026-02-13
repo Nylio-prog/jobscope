@@ -1,8 +1,6 @@
 ---
+import WallOfPathsSection from '../components/WallOfPathsSection.astro';
 import Layout from '../layouts/Layout.astro';
-import { listApprovedJobProfiles } from '../lib/job-profiles-repository';
-
-const jobs = (await listApprovedJobProfiles()).slice(0, 12);
 ---
 
 <Layout title="Wall of Paths" description="Explore real career stories in the Wall of Paths view.">
@@ -20,21 +18,19 @@ const jobs = (await listApprovedJobProfiles()).slice(0, 12);
     </div>
   </section>
 
-  <section class="wall-grid">
-    {
-      jobs.map((job, index) => (
-        <a
-          class="panel tile animate-rise"
-          style={`animation-delay:${index * 60}ms`}
-          href={`/jobs/${job.slug}`}
-        >
-          <p class="tile-label">{job.industry}</p>
-          <h2>{job.roleTitle}</h2>
-          <p>{job.location}</p>
-        </a>
-      ))
-    }
-  </section>
+  <WallOfPathsSection server:defer>
+    <section slot="fallback" class="wall-grid" aria-live="polite" aria-busy="true">
+      {
+        Array.from({ length: 9 }).map(() => (
+          <article class="panel tile skeleton">
+            <div class="skeleton-pill" />
+            <div class="skeleton-title" />
+            <div class="skeleton-line" />
+          </article>
+        ))
+      }
+    </section>
+  </WallOfPathsSection>
 </Layout>
 
 <style>
@@ -71,6 +67,45 @@ const jobs = (await listApprovedJobProfiles()).slice(0, 12);
     background: #fff;
     border: 1px solid var(--line);
     font-size: 0.79rem;
+  }
+
+  .tile.skeleton {
+    gap: 0.55rem;
+    pointer-events: none;
+  }
+
+  .skeleton-pill,
+  .skeleton-title,
+  .skeleton-line {
+    border-radius: 999px;
+    background: linear-gradient(90deg, #ece7db, #f7f3ea, #ece7db);
+    background-size: 180% 100%;
+    animation: shimmer 1.2s ease-in-out infinite;
+  }
+
+  .skeleton-pill {
+    width: 28%;
+    height: 0.95rem;
+  }
+
+  .skeleton-title {
+    width: 86%;
+    height: 1.35rem;
+    border-radius: 10px;
+  }
+
+  .skeleton-line {
+    width: 64%;
+    height: 1rem;
+  }
+
+  @keyframes shimmer {
+    0% {
+      background-position: 100% 0;
+    }
+    100% {
+      background-position: -100% 0;
+    }
   }
 
   @media (max-width: 900px) {

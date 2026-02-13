@@ -1,18 +1,6 @@
 ---
-import JobCard from '../../components/JobCard.astro';
+import JobsDirectorySection from '../../components/JobsDirectorySection.astro';
 import Layout from '../../layouts/Layout.astro';
-import {
-  applyJobFilters,
-  getDirectoryFacets,
-  parseDirectoryFilters,
-  sortJobs,
-} from '../../lib/jobs';
-import { listApprovedJobProfiles } from '../../lib/job-profiles-repository';
-
-const filters = parseDirectoryFilters(Astro.url.searchParams);
-const allJobs = await listApprovedJobProfiles();
-const filteredJobs = sortJobs(applyJobFilters(allJobs, filters), filters.sort);
-const facets = getDirectoryFacets(allJobs);
 ---
 
 <Layout title="Jobs Directory" description="Browse approved job stories with filters.">
@@ -22,100 +10,78 @@ const facets = getDirectoryFacets(allJobs);
     <p>Filter by industry, work mode, or keyword to quickly shortlist relevant roles.</p>
   </section>
 
-  <form class="panel filters" method="get">
-    <label>
-      Keyword
-      <input
-        type="search"
-        name="q"
-        value={filters.query ?? ''}
-        placeholder="nurse, product, policy..."
-      />
-    </label>
-
-    <label>
-      Industry
-      <select name="industry">
-        <option value="">All industries</option>
+  <JobsDirectorySection search={Astro.url.search} server:defer>
+    <div slot="fallback" class="stack" aria-live="polite" aria-busy="true">
+      <section class="panel filters-skeleton">
+        <div class="skeleton-chip"></div>
+        <div class="skeleton-chip"></div>
+        <div class="skeleton-chip"></div>
+        <div class="skeleton-chip"></div>
+      </section>
+      <p class="result-count">Loading jobs...</p>
+      <section class="job-grid">
         {
-          facets.industries.map((industry) => (
-            <option value={industry} selected={filters.industry === industry}>
-              {industry}
-            </option>
+          Array.from({ length: 8 }).map(() => (
+            <article class="panel card-skeleton">
+              <div class="skeleton-line short" />
+              <div class="skeleton-line long" />
+              <div class="skeleton-line medium" />
+            </article>
           ))
         }
-      </select>
-    </label>
-
-    <label>
-      Work mode
-      <select name="workMode">
-        <option value="">All modes</option>
-        {
-          facets.workModes.map((workMode) => (
-            <option value={workMode} selected={filters.workMode === workMode}>
-              {workMode}
-            </option>
-          ))
-        }
-      </select>
-    </label>
-
-    <label>
-      Sort
-      <select name="sort">
-        <option value="newest" selected={filters.sort === 'newest'}>Newest first</option>
-        <option value="title-asc" selected={filters.sort === 'title-asc'}>Title A-Z</option>
-        <option value="experience-asc" selected={filters.sort === 'experience-asc'}>
-          Experience low-high
-        </option>
-        <option value="experience-desc" selected={filters.sort === 'experience-desc'}>
-          Experience high-low
-        </option>
-      </select>
-    </label>
-
-    <div class="cta-row">
-      <button class="btn btn-primary" type="submit">Apply filters</button>
-      <a class="btn btn-secondary" href="/jobs">Reset</a>
+      </section>
     </div>
-  </form>
-
-  <p class="result-count">{filteredJobs.length} jobs found</p>
-  <section class="job-grid">
-    {filteredJobs.map((job) => <JobCard job={job} />)}
-  </section>
+  </JobsDirectorySection>
 </Layout>
 
 <style>
-  .filters {
+  .filters-skeleton {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.7rem;
+  }
+
+  .skeleton-chip,
+  .skeleton-line {
+    border-radius: 999px;
+    background: linear-gradient(90deg, #ece7db, #f7f3ea, #ece7db);
+    background-size: 180% 100%;
+    animation: shimmer 1.2s ease-in-out infinite;
+  }
+
+  .skeleton-chip {
+    width: 150px;
+    height: 2rem;
+  }
+
+  .card-skeleton {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));
-    gap: 0.9rem;
+    gap: 0.55rem;
   }
 
-  .filters label {
-    display: grid;
-    gap: 0.3rem;
-    font-weight: 700;
-    color: var(--ink-soft);
-    min-width: 0;
+  .skeleton-line {
+    height: 1rem;
   }
 
-  .filters input,
-  .filters select,
-  .filters button {
-    font: inherit;
+  .skeleton-line.short {
+    width: 35%;
   }
 
-  .filters input,
-  .filters select {
-    border: 1px solid var(--line);
-    background: #fff;
-    border-radius: 10px;
-    padding: 0.48rem 0.55rem;
-    width: 100%;
-    min-width: 0;
+  .skeleton-line.medium {
+    width: 65%;
+  }
+
+  .skeleton-line.long {
+    width: 90%;
+  }
+
+  @keyframes shimmer {
+    0% {
+      background-position: 100% 0;
+    }
+    100% {
+      background-position: -100% 0;
+    }
   }
 
   .result-count {
