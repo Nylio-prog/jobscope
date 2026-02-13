@@ -100,7 +100,6 @@ export async function createPendingSubmission(
     };
   }
 
-  const supabase = createSupabaseAnonClient();
   const reviewNotes = [
     moderation.containsLink ? 'Contains external link' : '',
     ...moderation.flags.map((flag) => `Flagged phrase: ${flag}`),
@@ -108,38 +107,68 @@ export async function createPendingSubmission(
     .filter(Boolean)
     .join(' | ');
 
-  const { data, error } = await supabase
-    .from(JOB_PROFILES_TABLE)
-    .insert({
-      slug,
-      role_title: submission.roleTitle,
-      industry: submission.industry,
-      seniority: submission.seniority,
-      location: submission.location,
-      work_mode: submission.workMode,
-      salary_range: submission.salaryRange ?? null,
-      education_path: submission.educationPath ?? null,
-      day_to_day: submission.dayToDay,
-      tools_used: submission.toolsUsed,
-      best_parts: submission.bestParts,
-      hardest_parts: submission.hardestParts,
-      recommendation_to_students: submission.recommendationToStudents,
-      years_experience: submission.yearsExperience,
-      submitter_type: submission.submitterType,
-      contact_email: submission.contactEmail ?? null,
-      status: 'pending',
-      review_notes: reviewNotes || null,
-    })
-    .select('id,slug')
-    .single<{ id: string; slug: string }>();
+  const insertPayload = {
+    slug,
+    role_title: submission.roleTitle,
+    industry: submission.industry,
+    seniority: submission.seniority,
+    location: submission.location,
+    work_mode: submission.workMode,
+    salary_range: submission.salaryRange ?? null,
+    education_path: submission.educationPath ?? null,
+    day_to_day: submission.dayToDay,
+    tools_used: submission.toolsUsed,
+    best_parts: submission.bestParts,
+    hardest_parts: submission.hardestParts,
+    recommendation_to_students: submission.recommendationToStudents,
+    years_experience: submission.yearsExperience,
+    submitter_type: submission.submitterType,
+    contact_email: submission.contactEmail ?? null,
+    status: 'pending',
+    review_notes: reviewNotes || null,
+  };
 
-  if (error || !data) {
-    throw new Error(error?.message ?? 'Failed to insert pending submission into Supabase.');
+  const insertWithClient = async (
+    client: ReturnType<typeof createSupabaseAnonClient>,
+  ): Promise<{ id: string; slug: string } | null> => {
+    const { data, error } = await client
+      .from(JOB_PROFILES_TABLE)
+      .insert(insertPayload)
+      .select('id,slug')
+      .single<{ id: string; slug: string }>();
+
+    if (error || !data) {
+      const errorCode = typeof error?.code === 'string' ? error.code : '';
+      const errorMessage = (error?.message ?? '').toLowerCase();
+      const isRlsViolation = errorCode === '42501' || errorMessage.includes('row-level security');
+
+      if (isRlsViolation && isSupabaseAdminConfigured()) {
+        return null;
+      }
+
+      throw new Error(error?.message ?? 'Failed to insert pending submission into Supabase.');
+    }
+
+    return data;
+  };
+
+  const anonClient = createSupabaseAnonClient();
+  let inserted = await insertWithClient(anonClient);
+
+  if (!inserted && isSupabaseAdminConfigured()) {
+    const adminClient = createSupabaseAdminClient();
+    inserted = await insertWithClient(adminClient);
+  }
+
+  if (!inserted) {
+    throw new Error(
+      'Supabase blocked the submission due to row-level security. Configure insert policy or set SUPABASE_SERVICE_ROLE_KEY.',
+    );
   }
 
   return {
-    id: data.id,
-    slug: data.slug,
+    id: inserted.id,
+    slug: inserted.slug,
     storage: 'supabase',
   };
 }

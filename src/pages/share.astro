@@ -104,14 +104,40 @@ import { INDUSTRIES, SENIORITY_LEVELS, SUBMITTER_TYPES, WORK_MODES } from '../li
       <button class="btn btn-primary" type="submit">Submit for moderation</button>
       <p id="share-status" role="status" aria-live="polite"></p>
     </div>
+
+    <div id="share-error-summary" class="error-summary hidden" role="alert" aria-live="assertive">
+    </div>
   </form>
 </Layout>
 
 <script>
   const form = document.querySelector('#share-form');
   const status = document.querySelector('#share-status');
+  const errorSummary = document.querySelector('#share-error-summary');
 
-  if (form instanceof HTMLFormElement && status instanceof HTMLParagraphElement) {
+  if (
+    form instanceof HTMLFormElement &&
+    status instanceof HTMLParagraphElement &&
+    errorSummary instanceof HTMLDivElement
+  ) {
+    const fieldLabels: Record<string, string> = {
+      roleTitle: 'Role title',
+      industry: 'Industry',
+      seniority: 'Seniority',
+      location: 'Location',
+      workMode: 'Work mode',
+      yearsExperience: 'Years of experience',
+      salaryRange: 'Salary range',
+      educationPath: 'Education path',
+      toolsUsed: 'Tools used',
+      dayToDay: 'Day-to-day',
+      bestParts: 'Best parts',
+      hardestParts: 'Hardest parts',
+      recommendationToStudents: 'Recommendation to students',
+      submitterType: 'Submitter type',
+      contactEmail: 'Contact email',
+    };
+
     const clearFieldErrors = () => {
       const controls = form.querySelectorAll('input, select, textarea');
       for (const control of controls) {
@@ -129,6 +155,9 @@ import { INDUSTRIES, SENIORITY_LEVELS, SUBMITTER_TYPES, WORK_MODES } from '../li
       for (const message of messages) {
         message.remove();
       }
+
+      errorSummary.classList.add('hidden');
+      errorSummary.innerHTML = '';
     };
 
     const applyFieldErrors = (errors: unknown) => {
@@ -137,6 +166,8 @@ import { INDUSTRIES, SENIORITY_LEVELS, SUBMITTER_TYPES, WORK_MODES } from '../li
       }
 
       let firstInvalidControl = null;
+      const summaryItems = [];
+
       for (const [name, messages] of Object.entries(errors)) {
         const control = form.querySelector(`[name="${name}"]`);
         if (
@@ -160,7 +191,17 @@ import { INDUSTRIES, SENIORITY_LEVELS, SUBMITTER_TYPES, WORK_MODES } from '../li
           helper.className = 'field-message';
           helper.textContent = messages[0];
           control.insertAdjacentElement('afterend', helper);
+          const label = fieldLabels[name] ?? name;
+          summaryItems.push(`<li><strong>${label}:</strong> ${messages[0]}</li>`);
         }
+      }
+
+      if (summaryItems.length > 0) {
+        errorSummary.classList.remove('hidden');
+        errorSummary.innerHTML = `
+          <h3>Please correct the following fields:</h3>
+          <ul>${summaryItems.join('')}</ul>
+        `;
       }
 
       if (firstInvalidControl) {
@@ -196,10 +237,17 @@ import { INDUSTRIES, SENIORITY_LEVELS, SUBMITTER_TYPES, WORK_MODES } from '../li
         }
 
         status.classList.add('status-error');
-        applyFieldErrors(data.errors);
+        if (data.errors) {
+          applyFieldErrors(data.errors);
+        } else if (data.message) {
+          errorSummary.classList.remove('hidden');
+          errorSummary.innerHTML = `<p>${data.message}</p>`;
+        }
         status.textContent = data.message ?? 'Submission failed. Please review and try again.';
       } catch {
         status.classList.add('status-error');
+        errorSummary.classList.remove('hidden');
+        errorSummary.innerHTML = '<p>Network error while submitting. Please try again.</p>';
         status.textContent = 'Network error while submitting. Please try again.';
       }
     });
@@ -244,6 +292,33 @@ import { INDUSTRIES, SENIORITY_LEVELS, SUBMITTER_TYPES, WORK_MODES } from '../li
 
   .full {
     grid-column: 1 / -1;
+  }
+
+  .error-summary {
+    border: 1px solid #d77961;
+    background: linear-gradient(180deg, #fff4f0, #ffe9e2);
+    border-radius: 12px;
+    padding: 0.8rem 0.9rem;
+    color: #7f1d12;
+  }
+
+  .error-summary.hidden {
+    display: none;
+  }
+
+  .error-summary h3 {
+    margin: 0 0 0.4rem;
+    font-size: 0.95rem;
+  }
+
+  .error-summary p,
+  .error-summary ul {
+    margin: 0;
+    padding-left: 1rem;
+  }
+
+  .error-summary li {
+    margin: 0.15rem 0;
   }
 
   #share-status {

@@ -75,13 +75,16 @@ export const POST: APIRoute = async ({ request }) => {
       moderation,
     });
   } catch (error) {
+    const message = error instanceof Error ? error.message : 'Submission could not be persisted.';
+    const normalizedMessage = message.toLowerCase();
+    const isRls = normalizedMessage.includes('row-level security');
+
     return json(
       {
         ok: false,
-        message:
-          error instanceof Error
-            ? error.message
-            : 'Submission could not be persisted. Please try again.',
+        message: isRls
+          ? 'Submission storage is not configured yet (Supabase policy blocked it). Ask the admin to finish Supabase setup.'
+          : message,
       },
       500,
     );
