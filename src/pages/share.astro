@@ -19,98 +19,124 @@ import { INDUSTRIES, SENIORITY_LEVELS, SUBMITTER_TYPES, WORK_MODES } from '../li
       <input name="website" type="text" autocomplete="off" tabindex="-1" />
     </label>
 
-    <label>
-      Role title *
-      <input name="roleTitle" required />
-    </label>
+    <section class="form-block" aria-label="Role basics">
+      <h2>About the role</h2>
+      <p class="block-note">These details help readers find relevant stories.</p>
+      <div class="form-grid">
+        <label>
+          Role title *
+          <input name="roleTitle" required />
+        </label>
 
-    <label>
-      Industry *
-      <select name="industry" required>
-        <option value="">Select one</option>
-        {INDUSTRIES.map((industry) => <option value={industry}>{industry}</option>)}
-      </select>
-    </label>
+        <label>
+          Industry *
+          <select name="industry" required>
+            <option value="">Select one</option>
+            {INDUSTRIES.map((industry) => <option value={industry}>{industry}</option>)}
+          </select>
+        </label>
 
-    <label>
-      Seniority *
-      <select name="seniority" required>
-        <option value="">Select one</option>
-        {SENIORITY_LEVELS.map((level) => <option value={level}>{level}</option>)}
-      </select>
-    </label>
+        <label>
+          Seniority *
+          <select name="seniority" required>
+            <option value="">Select one</option>
+            {SENIORITY_LEVELS.map((level) => <option value={level}>{level}</option>)}
+          </select>
+        </label>
 
-    <label>
-      Location *
-      <input name="location" placeholder="City, country or Remote" required />
-    </label>
+        <label>
+          Location *
+          <input name="location" placeholder="City, country or Remote" required />
+        </label>
 
-    <label>
-      Work mode *
-      <select name="workMode" required>
-        <option value="">Select one</option>
-        {WORK_MODES.map((mode) => <option value={mode}>{mode}</option>)}
-      </select>
-    </label>
+        <label>
+          Work mode *
+          <select name="workMode" required>
+            <option value="">Select one</option>
+            {WORK_MODES.map((mode) => <option value={mode}>{mode}</option>)}
+          </select>
+        </label>
 
-    <label>
-      Years of experience *
-      <input type="number" min="0" max="50" name="yearsExperience" required />
-    </label>
+        <label>
+          Years of experience *
+          <input type="number" min="0" max="50" name="yearsExperience" required />
+        </label>
+      </div>
+    </section>
 
-    <label>
-      Salary range (optional)
-      <input name="salaryRange" placeholder="$60k-$75k" />
-    </label>
+    <details class="form-block optional-block">
+      <summary>Additional details (optional)</summary>
+      <div class="form-grid">
+        <label>
+          Salary range
+          <input name="salaryRange" placeholder="$60k-$75k" />
+        </label>
 
-    <label>
-      Education path (optional)
-      <input name="educationPath" />
-    </label>
+        <label>
+          Education path
+          <input name="educationPath" />
+        </label>
+      </div>
+    </details>
 
-    <label class="full">
-      Tools used (comma-separated) *
-      <input name="toolsUsed" placeholder="Excel, SQL, Figma" required />
-    </label>
+    <section class="form-block" aria-label="Work reality">
+      <h2>What the work is really like</h2>
+      <div class="form-grid">
+        <label class="span-all">
+          Tools used (comma-separated) *
+          <input name="toolsUsed" placeholder="Excel, SQL, Figma" required />
+        </label>
 
-    <label class="full">
-      What do you do day-to-day? *
-      <textarea name="dayToDay" rows="4" required></textarea>
-    </label>
+        <label class="span-all">
+          What do you do day-to-day? *
+          <textarea name="dayToDay" rows="4" required></textarea>
+        </label>
 
-    <label class="full">
-      Best parts *
-      <textarea name="bestParts" rows="3" required></textarea>
-    </label>
+        <label class="span-all">
+          Best parts *
+          <textarea name="bestParts" rows="3" required></textarea>
+        </label>
 
-    <label class="full">
-      Hardest parts *
-      <textarea name="hardestParts" rows="3" required></textarea>
-    </label>
+        <label class="span-all">
+          Hardest parts *
+          <textarea name="hardestParts" rows="3" required></textarea>
+        </label>
+      </div>
+    </section>
 
-    <label class="full">
-      Recommendation to students *
-      <textarea name="recommendationToStudents" rows="3" required></textarea>
-    </label>
+    <section class="form-block" aria-label="Student advice">
+      <h2>Advice to students</h2>
+      <div class="form-grid">
+        <label class="span-all">
+          Recommendation to students *
+          <textarea name="recommendationToStudents" rows="3" required></textarea>
+        </label>
+      </div>
+    </section>
 
-    <label>
-      Submitter type *
-      <select name="submitterType" required>
-        {SUBMITTER_TYPES.map((type) => <option value={type}>{type}</option>)}
-      </select>
-    </label>
+    <section class="form-block" aria-label="Submitter identity">
+      <h2>Submitter info</h2>
+      <div class="form-grid">
+        <label>
+          Submitter type *
+          <select name="submitterType" required>
+            {SUBMITTER_TYPES.map((type) => <option value={type}>{type}</option>)}
+          </select>
+        </label>
 
-    <label>
-      Contact email (optional)
-      <input name="contactEmail" type="email" placeholder="name@email.com" />
-    </label>
-
-    <div class="full cta-row">
-      <button class="btn btn-primary" type="submit">Submit for moderation</button>
-      <p id="share-status" role="status" aria-live="polite"></p>
-    </div>
+        <label>
+          Contact email (optional)
+          <input name="contactEmail" type="email" placeholder="name@email.com" />
+        </label>
+      </div>
+    </section>
 
     <div id="share-error-summary" class="error-summary hidden" role="alert" aria-live="assertive">
+    </div>
+
+    <div class="submit-bar">
+      <button class="btn btn-primary" type="submit">Submit for moderation</button>
+      <p id="share-status" role="status" aria-live="polite"></p>
     </div>
   </form>
 </Layout>
@@ -210,6 +236,10 @@ import { INDUSTRIES, SENIORITY_LEVELS, SUBMITTER_TYPES, WORK_MODES } from '../li
 
         control.classList.add('field-error');
         control.setAttribute('aria-invalid', 'true');
+        const details = control.closest('details');
+        if (details instanceof HTMLDetailsElement) {
+          details.open = true;
+        }
         if (!firstInvalidControl) {
           firstInvalidControl = control;
         }
@@ -288,15 +318,48 @@ import { INDUSTRIES, SENIORITY_LEVELS, SUBMITTER_TYPES, WORK_MODES } from '../li
 <style>
   .share-form {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
-    gap: 0.9rem;
+    gap: 1rem;
+    padding: 1.2rem;
+    border-radius: 22px;
   }
 
-  .share-form label {
+  .form-block {
+    margin: 0;
+    padding: 0;
+    border: 0;
+    display: grid;
+    gap: 0.65rem;
+  }
+
+  .form-block + .form-block {
+    padding-top: 0.9rem;
+    border-top: 1px solid rgba(15, 42, 59, 0.1);
+  }
+
+  .form-block h2 {
+    margin: 0;
+    font-size: 1.12rem;
+    line-height: 1.2;
+  }
+
+  .block-note {
+    margin: 0;
+    color: var(--ink-soft);
+    font-size: 0.95rem;
+  }
+
+  .form-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 0.85rem;
+  }
+
+  .form-grid label {
     display: grid;
     gap: 0.35rem;
     font-weight: 700;
     color: var(--ink-soft);
+    min-width: 0;
   }
 
   .honeypot-field {
@@ -307,14 +370,21 @@ import { INDUSTRIES, SENIORITY_LEVELS, SUBMITTER_TYPES, WORK_MODES } from '../li
     overflow: hidden;
   }
 
-  .share-form input,
-  .share-form select,
-  .share-form textarea {
+  .form-grid input,
+  .form-grid select,
+  .form-grid textarea {
     font: inherit;
     border: 1px solid var(--line);
-    background: #fff;
+    background: rgba(255, 255, 255, 0.92);
     border-radius: 10px;
-    padding: 0.52rem 0.55rem;
+    padding: 0.56rem 0.6rem;
+    width: 100%;
+    min-width: 0;
+  }
+
+  .form-grid textarea {
+    resize: vertical;
+    min-height: 7.2rem;
   }
 
   .share-form .field-error {
@@ -329,8 +399,25 @@ import { INDUSTRIES, SENIORITY_LEVELS, SUBMITTER_TYPES, WORK_MODES } from '../li
     font-weight: 600;
   }
 
-  .full {
+  .span-all {
     grid-column: 1 / -1;
+  }
+
+  .optional-block {
+    border: 1px solid rgba(15, 42, 59, 0.12);
+    border-radius: 12px;
+    background: rgba(255, 255, 255, 0.52);
+    padding: 0.7rem;
+  }
+
+  .optional-block summary {
+    cursor: pointer;
+    font-weight: 700;
+    color: var(--ink-strong);
+  }
+
+  .optional-block[open] summary {
+    margin-bottom: 0.7rem;
   }
 
   .error-summary {
@@ -360,13 +447,47 @@ import { INDUSTRIES, SENIORITY_LEVELS, SUBMITTER_TYPES, WORK_MODES } from '../li
     margin: 0.15rem 0;
   }
 
+  .submit-bar {
+    display: grid;
+    gap: 0.55rem;
+    align-items: center;
+  }
+
+  .submit-bar .btn {
+    width: fit-content;
+  }
+
   #share-status {
     margin: 0;
     color: var(--ink-soft);
-    align-self: center;
   }
 
   #share-status.status-error {
     color: #9b2014;
+  }
+
+  @media (max-width: 760px) {
+    .share-form {
+      padding: 1rem;
+      gap: 0.9rem;
+    }
+
+    .form-grid {
+      grid-template-columns: 1fr;
+    }
+
+    .submit-bar {
+      position: sticky;
+      bottom: 0.5rem;
+      background: color-mix(in srgb, var(--bg-base) 92%, transparent);
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      padding: 0.55rem;
+      z-index: 20;
+    }
+
+    .submit-bar .btn {
+      width: 100%;
+    }
   }
 </style>
