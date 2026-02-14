@@ -19,6 +19,8 @@ const { title, description = 'See what jobs are actually like.', noIndex = false
     <meta name="viewport" content="width=device-width" />
     <meta name="generator" content={Astro.generator} />
     <meta name="description" content={description} />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <link rel="alternate icon" href="/favicon.svg" />
     {noIndex && <meta name="robots" content="noindex,nofollow" />}
     <title>{title} | JobScope</title>
     <script is:inline>
