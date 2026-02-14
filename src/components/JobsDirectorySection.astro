@@ -149,7 +149,7 @@ const buildJobsHref = (
     <input type="search" name="region" value={filters.region ?? ''} placeholder="e.g. London, US, Remote" />
   </label>
 
-  <label class="toggle-label full-width">
+  <label class="toggle-label">
     <input type="checkbox" name="salaryProvided" value="1" checked={filters.salaryProvided} />
     <span>Only entries with salary range</span>
   </label>
@@ -318,11 +318,13 @@ const buildJobsHref = (
   }
 
   .filters .toggle-label {
-    display: flex;
+    display: inline-flex;
     align-items: center;
     gap: 0.6rem;
-    align-self: stretch;
-    min-height: 2.35rem;
+    align-self: center;
+    justify-self: start;
+    width: fit-content;
+    max-width: 100%;
     padding: 0.45rem 0.6rem;
     border: 1px solid var(--line);
     border-radius: 10px;
