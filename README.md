@@ -159,7 +159,8 @@ with check (
 - Jobs directory now supports compare mode, expanded filters, and pagination.
 - Header includes a persistent palette toggle (Sand/Coastal/Graphite) backed by semantic theme tokens.
 - Moderation supports filtered queue views, metrics, and bulk actions.
-- If Supabase env vars are missing, submission API falls back to local-dev mode (for tests/dev only).
+- If Supabase env vars are missing in production, `/api/share` returns `503` until storage is configured.
+- Local fallback storage is only available in dev/test mode.
 - Homepage and jobs directory use deferred server rendering with skeleton fallbacks while waiting for DB data.
 - Seed data includes 20 approved job profiles for demo and testing.
 - If building from a Windows-mounted path (for example `/mnt/c/...` in WSL), Vercel adapter copy steps may hit `EPERM`; build from a native Linux path (for example `/tmp/...`) to validate packaging.

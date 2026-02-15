@@ -3,6 +3,7 @@ import type { APIRoute } from 'astro';
 import { findPotentialDuplicateSubmission, createPendingSubmission } from '../../lib/job-profiles-repository';
 import { buildClientFingerprint } from '../../lib/request-metadata';
 import { checkRateLimit } from '../../lib/rate-limit';
+import { isLocalFallbackAllowed, isSupabaseConfigured } from '../../lib/supabase';
 import { logError, logInfo } from '../../lib/telemetry';
 import {
   assessSubmissionForModeration,
@@ -57,6 +58,17 @@ export const POST: APIRoute = async ({ request }) => {
         message: 'Unsupported content type. Use JSON or form data.',
       },
       415,
+    );
+  }
+
+  if (!isSupabaseConfigured() && !isLocalFallbackAllowed()) {
+    return json(
+      {
+        ok: false,
+        message:
+          'Submission storage is not configured. Set PUBLIC_SUPABASE_URL and PUBLIC_SUPABASE_ANON_KEY.',
+      },
+      503,
     );
   }
 

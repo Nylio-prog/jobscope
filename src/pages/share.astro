@@ -220,7 +220,7 @@ import { INDUSTRIES, SENIORITY_LEVELS, SUBMITTER_TYPES, WORK_MODES } from '../li
       }
 
       let firstInvalidControl = null;
-      const summaryItems = [];
+      const summaryItems: Array<{ label: string; message: string }> = [];
 
       for (const [name, messages] of Object.entries(errors)) {
         const control = form.querySelector(`[name="${name}"]`);
@@ -245,21 +245,34 @@ import { INDUSTRIES, SENIORITY_LEVELS, SUBMITTER_TYPES, WORK_MODES } from '../li
         }
 
         if (Array.isArray(messages) && messages.length > 0) {
+          const message = String(messages[0] ?? '');
           const helper = document.createElement('p');
           helper.className = 'field-message';
-          helper.textContent = messages[0];
+          helper.textContent = message;
           control.insertAdjacentElement('afterend', helper);
           const label = fieldLabels[name] ?? name;
-          summaryItems.push(`<li><strong>${label}:</strong> ${messages[0]}</li>`);
+          summaryItems.push({ label, message });
         }
       }
 
       if (summaryItems.length > 0) {
         errorSummary.classList.remove('hidden');
-        errorSummary.innerHTML = `
-          <h3>Please correct the following fields:</h3>
-          <ul>${summaryItems.join('')}</ul>
-        `;
+        errorSummary.replaceChildren();
+
+        const heading = document.createElement('h3');
+        heading.textContent = 'Please correct the following fields:';
+        errorSummary.appendChild(heading);
+
+        const list = document.createElement('ul');
+        for (const item of summaryItems) {
+          const li = document.createElement('li');
+          const strong = document.createElement('strong');
+          strong.textContent = `${item.label}:`;
+          li.appendChild(strong);
+          li.appendChild(document.createTextNode(` ${item.message}`));
+          list.appendChild(li);
+        }
+        errorSummary.appendChild(list);
       }
 
       if (firstInvalidControl) {
@@ -302,7 +315,10 @@ import { INDUSTRIES, SENIORITY_LEVELS, SUBMITTER_TYPES, WORK_MODES } from '../li
           applyFieldErrors(data.errors);
         } else if (data.message) {
           errorSummary.classList.remove('hidden');
-          errorSummary.innerHTML = `<p>${data.message}</p>`;
+          errorSummary.replaceChildren();
+          const message = document.createElement('p');
+          message.textContent = String(data.message);
+          errorSummary.appendChild(message);
         }
         status.textContent = data.message ?? 'Submission failed. Please review and try again.';
       } catch {

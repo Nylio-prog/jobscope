@@ -5,6 +5,7 @@ import type { ModerationAssessment } from './submission';
 import {
   createSupabaseAdminClient,
   createSupabaseAnonClient,
+  isLocalFallbackAllowed,
   isSupabaseAdminConfigured,
   isSupabaseConfigured,
 } from './supabase';
@@ -258,6 +259,12 @@ export async function createPendingSubmission(
   const slug = createUniqueRoleSlug(submission.roleTitle);
 
   if (!isSupabaseConfigured()) {
+    if (!isLocalFallbackAllowed()) {
+      throw new Error(
+        'Supabase submission storage is required in production. Set PUBLIC_SUPABASE_URL and PUBLIC_SUPABASE_ANON_KEY.',
+      );
+    }
+
     return {
       id: `local-${Date.now().toString(36)}`,
       slug,
