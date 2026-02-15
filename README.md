@@ -32,6 +32,12 @@ npm install
 npm run dev
 ```
 
+If you moved this repo from Windows and kept `node_modules`, Linux execute bits can be lost. Run:
+
+```sh
+npm run fix:bin-perms
+```
+
 ## Quality commands
 
 ```sh

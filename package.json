@@ -3,7 +3,10 @@
   "type": "module",
   "version": "0.0.1",
   "scripts": {
+    "fix:bin-perms": "bash ./scripts/fix-bin-perms.sh",
+    "predev": "npm run fix:bin-perms",
     "dev": "astro dev",
+    "prebuild": "npm run fix:bin-perms",
     "build": "ASTRO_TELEMETRY_DISABLED=1 astro build",
     "preview": "astro preview",
     "astro": "astro",
@@ -11,6 +14,7 @@
     "lint": "eslint .",
     "format": "prettier --write .",
     "format:check": "prettier --check .",
+    "pretest": "npm run fix:bin-perms",
     "test": "node ./node_modules/vitest/vitest.mjs run",
     "test:watch": "node ./node_modules/vitest/vitest.mjs",
     "test:coverage": "node ./node_modules/vitest/vitest.mjs run --coverage"
