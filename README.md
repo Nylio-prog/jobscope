@@ -161,6 +161,7 @@ with check (
 
 - Submissions are accepted without login and stored as `pending`.
 - `/api/share` uses honeypot + rate limiting + duplicate detection before enqueue.
+- Vercel Analytics is mounted globally via the shared layout.
 - Jobs directory now supports compare mode, expanded filters, and pagination.
 - Header includes a persistent palette toggle (Sand/Coastal/Graphite) backed by semantic theme tokens.
 - Moderation supports filtered queue views, metrics, and bulk actions.
