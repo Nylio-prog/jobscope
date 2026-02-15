@@ -3,8 +3,8 @@
 
 begin;
 
-truncate table if exists public.moderation_events;
-truncate table if exists public.analytics_events;
-truncate table if exists public.job_profiles restart identity cascade;
+truncate table public.moderation_events;
+truncate table public.analytics_events;
+truncate table public.job_profiles restart identity cascade;
 
 commit;
