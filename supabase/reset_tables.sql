@@ -1,4 +1,4 @@
--- WARNING: This removes all data from JobScope app tables.
+-- WARNING: This removes all data from RealJobScope app tables.
 -- Run in Supabase SQL Editor only when you intentionally want a clean slate.
 
 begin;

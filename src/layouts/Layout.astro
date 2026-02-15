@@ -22,10 +22,10 @@ const { title, description = 'See what jobs are actually like.', noIndex = false
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
     <link rel="alternate icon" href="/favicon.svg" />
     {noIndex && <meta name="robots" content="noindex,nofollow" />}
-    <title>{title} | JobScope</title>
+    <title>{title} | RealJobScope</title>
     <script is:inline>
       (() => {
-        const storageKey = 'jobscope_theme';
+        const storageKey = 'realjobscope_theme';
         const selectableThemes = new Set(['sand', 'coastal', 'graphite']);
         try {
           const storedTheme = localStorage.getItem(storageKey);
@@ -51,7 +51,7 @@ const { title, description = 'See what jobs are actually like.', noIndex = false
     </div>
     <script is:inline>
       (() => {
-        const themeStorageKey = 'jobscope_theme';
+        const themeStorageKey = 'realjobscope_theme';
         const themes = [
           { id: 'sand', label: 'Sand' },
           { id: 'coastal', label: 'Coastal' },
@@ -114,7 +114,7 @@ const { title, description = 'See what jobs are actually like.', noIndex = false
           return;
         }
 
-        const storageKey = 'jobscope_session_id';
+        const storageKey = 'realjobscope_session_id';
         const currentSessionId =
           window.sessionStorage.getItem(storageKey) ??
           `${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 8)}`;

@@ -1,4 +1,4 @@
-# JobScope V2 Plan
+# RealJobScope V2 Plan
 
 Last updated: 2026-02-13
 Status: Draft for planning (no implementation in this document)

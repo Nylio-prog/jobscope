@@ -8,7 +8,7 @@ These are practical v1 decisions optimized for quality, speed, and free-tier con
 3. Route `/`: gateway page linking to `/1` to `/5` plus "recommended start" CTA.
 
 ## Brand and Voice
-1. Working name: `JobScope`.
+1. Working name: `RealJobScope`.
 2. Tagline: `See what jobs are actually like.`
 3. Tone: mixed, 70% factual and 30% energetic.
 4. Anonymous testimonials: allowed but visually labeled as anonymous.

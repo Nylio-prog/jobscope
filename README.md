@@ -1,6 +1,6 @@
-# JobScope
+# RealJobScope
 
-JobScope is a career-discovery website where students and early-career users can explore structured, real-world job stories.
+RealJobScope is a career-discovery website where students and early-career users can explore structured, real-world job stories.
 
 ## Implemented routes
 
