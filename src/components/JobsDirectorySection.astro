@@ -324,27 +324,26 @@ const buildJobsHref = (
     margin: 0;
     padding: 0;
     border: 0;
-    display: grid;
-    gap: 0.35rem;
     min-width: 0;
   }
 
   .filters .toggle-fieldset legend {
     padding: 0;
+    margin: 0 0 0.3rem;
     font-weight: 700;
     color: var(--ink-soft);
     white-space: nowrap;
   }
 
   .filters .toggle-label {
-    display: inline-flex;
+    display: flex;
     align-items: center;
     gap: 0.6rem;
-    align-self: start;
-    justify-self: start;
-    width: fit-content;
+    width: 100%;
     max-width: 100%;
-    padding: 0.45rem 0.6rem;
+    min-height: 2.45rem;
+    box-sizing: border-box;
+    padding: 0.48rem 0.55rem;
     border: 1px solid var(--line);
     border-radius: 10px;
     background: #fff;
