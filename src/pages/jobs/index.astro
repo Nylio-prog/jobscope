@@ -12,19 +12,19 @@ import Layout from '../../layouts/Layout.astro';
 
   <section class="panel collections" aria-label="Curated collections">
     <h2>Curated collections</h2>
-    <p>Jump into focused role sets if you are exploring a specific path.</p>
+    <p>Start with common search intents, then refine with filters below.</p>
     <div class="collections-grid">
-      <a href="/jobs?industry=Healthcare&seniority=Entry">
-        <h3>Healthcare starter paths</h3>
-        <p>Entry roles with practical day-to-day details and student advice.</p>
-      </a>
       <a href="/jobs?workMode=remote&experienceBand=0-2">
         <h3>Remote-friendly entry roles</h3>
         <p>Stories from roles with remote options and lower experience barriers.</p>
       </a>
-      <a href="/jobs?industry=Software&seniority=Mid">
-        <h3>Mid-career software tracks</h3>
-        <p>See how responsibilities and tradeoffs evolve beyond junior roles.</p>
+      <a href="/jobs?salaryProvided=1&sort=newest">
+        <h3>Salary-transparent roles</h3>
+        <p>Start with jobs that include salary ranges so comparisons are faster.</p>
+      </a>
+      <a href="/jobs?workMode=onsite&sort=newest">
+        <h3>Onsite hands-on roles</h3>
+        <p>Explore roles centered on in-person work and operational execution.</p>
       </a>
     </div>
   </section>
