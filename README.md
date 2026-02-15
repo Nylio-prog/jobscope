@@ -152,6 +152,11 @@ with check (
 4. Create moderator users in Supabase Auth using those emails.
 5. Open `/staff/moderation`, sign in via magic link, approve/reject pending submissions.
 
+## SQL editor helpers
+
+- `supabase/seed_test_jobs.sql`: upserts 10 approved sample jobs for testing.
+- `supabase/reset_tables.sql`: clears `job_profiles`, `moderation_events`, and `analytics_events`.
+
 ## Notes
 
 - Submissions are accepted without login and stored as `pending`.
