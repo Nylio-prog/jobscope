@@ -80,8 +80,7 @@ import Layout from '../layouts/Layout.astro';
     margin-bottom: 0.8rem;
     text-decoration: none;
     gap: 0.4rem;
-    background:
-      linear-gradient(150deg, rgba(39, 130, 108, 0.11), rgba(240, 139, 62, 0.12)), var(--bg-panel);
+    background: var(--tile-bg);
   }
 
   .tile h2 {
@@ -113,7 +112,7 @@ import Layout from '../layouts/Layout.astro';
   .skeleton-title,
   .skeleton-line {
     border-radius: 999px;
-    background: linear-gradient(90deg, #ece7db, #f7f3ea, #ece7db);
+    background: var(--skeleton-shimmer);
     background-size: 180% 100%;
     animation: shimmer 1.2s ease-in-out infinite;
   }
@@ -147,14 +146,7 @@ import Layout from '../layouts/Layout.astro';
     margin-top: 1.1rem;
     display: grid;
     gap: 0.8rem;
-    background:
-      linear-gradient(
-        140deg,
-        rgba(15, 76, 129, 0.11),
-        rgba(39, 130, 108, 0.1),
-        rgba(240, 139, 62, 0.1)
-      ),
-      var(--bg-panel);
+    background: var(--decision-lab-bg);
   }
 
   .decision-lab-head h2 {

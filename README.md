@@ -157,7 +157,7 @@ with check (
 - Submissions are accepted without login and stored as `pending`.
 - `/api/share` uses honeypot + rate limiting + duplicate detection before enqueue.
 - Jobs directory now supports compare mode, expanded filters, and pagination.
-- Header includes a persistent palette toggle (Sand/Coastal) backed by semantic theme tokens.
+- Header includes a persistent palette toggle (Sand/Coastal/Graphite) backed by semantic theme tokens.
 - Moderation supports filtered queue views, metrics, and bulk actions.
 - If Supabase env vars are missing, submission API falls back to local-dev mode (for tests/dev only).
 - Homepage and jobs directory use deferred server rendering with skeleton fallbacks while waiting for DB data.

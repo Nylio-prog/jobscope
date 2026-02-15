@@ -26,11 +26,14 @@ const { title, description = 'See what jobs are actually like.', noIndex = false
     <script is:inline>
       (() => {
         const storageKey = 'jobscope_theme';
+        const selectableThemes = new Set(['sand', 'coastal', 'graphite']);
         try {
           const storedTheme = localStorage.getItem(storageKey);
-          if (storedTheme === 'coastal') {
-            document.documentElement.dataset.theme = 'coastal';
+          if (!storedTheme || !selectableThemes.has(storedTheme) || storedTheme === 'sand') {
+            return;
           }
+
+          document.documentElement.dataset.theme = storedTheme;
         } catch {
           // Ignore storage errors; default theme remains active.
         }
@@ -49,34 +52,48 @@ const { title, description = 'See what jobs are actually like.', noIndex = false
     <script is:inline>
       (() => {
         const themeStorageKey = 'jobscope_theme';
+        const themes = [
+          { id: 'sand', label: 'Sand' },
+          { id: 'coastal', label: 'Coastal' },
+          { id: 'graphite', label: 'Graphite' },
+        ];
         const root = document.documentElement;
         const toggle = document.querySelector('[data-theme-toggle]');
         const label = document.querySelector('[data-theme-toggle-label]');
 
+        const normalizeTheme = (theme) =>
+          themes.some((candidate) => candidate.id === theme) ? theme : 'sand';
+
+        const getThemeLabel = (theme) => themes.find((candidate) => candidate.id === theme)?.label ?? 'Sand';
+
         const setTheme = (theme) => {
-          if (theme === 'coastal') {
-            root.dataset.theme = 'coastal';
-          } else {
+          const normalizedTheme = normalizeTheme(theme);
+
+          if (normalizedTheme === 'sand') {
             delete root.dataset.theme;
+          } else {
+            root.dataset.theme = normalizedTheme;
           }
 
           if (label) {
-            label.textContent = `Theme: ${theme === 'coastal' ? 'Coastal' : 'Sand'}`;
+            label.textContent = `Theme: ${getThemeLabel(normalizedTheme)}`;
           }
 
           try {
-            localStorage.setItem(themeStorageKey, theme);
+            localStorage.setItem(themeStorageKey, normalizedTheme);
           } catch {
             // Ignore storage errors.
           }
         };
 
-        const initialTheme = root.dataset.theme === 'coastal' ? 'coastal' : 'sand';
+        const initialTheme = normalizeTheme(root.dataset.theme ?? 'sand');
         setTheme(initialTheme);
 
         if (toggle instanceof HTMLButtonElement) {
           toggle.addEventListener('click', () => {
-            const nextTheme = root.dataset.theme === 'coastal' ? 'sand' : 'coastal';
+            const currentTheme = normalizeTheme(root.dataset.theme ?? 'sand');
+            const currentIndex = themes.findIndex((theme) => theme.id === currentTheme);
+            const nextTheme = themes[(currentIndex + 1) % themes.length]?.id ?? 'sand';
             setTheme(nextTheme);
           });
         }
